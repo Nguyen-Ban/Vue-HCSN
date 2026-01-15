@@ -1,0 +1,24 @@
+/* Main CSS entry point - Import global utilities and component-specific styles */
+
+@import './commons.css';
+@import './icons.css';
+@import './style.css';
+
+/* Reset app wrapper to full-screen layout like original HTML */
+#app {
+  width: 100%;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+}
+
+/* Component-specific styles are imported within each Vue component
+ * Example:
+ * - views/candidate/CandidateTable.vue imports CandidateTable.css
+ * - views/candidate/CandidateForm.vue imports CandidateForm.css
+ */

@@ -1,0 +1,33 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+
+/* Font Awesome (Giả sử bạn đã nhúng link CDN hoặc cài package) */
+
+body {
+    margin: 0;
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: #182026;
+    background-color: #f4f7ff;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+/* Scrollbar đẹp hơn */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-thumb {
+    background: #cdd3d6;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #aeb4b8;
+}
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+

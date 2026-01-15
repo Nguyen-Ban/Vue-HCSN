@@ -1,0 +1,191 @@
+.icon {
+  background-image: url("../icons/qlts-icon.svg");
+  background-repeat: no-repeat;
+  /* background-color: #182026; */
+  color: #182026;
+}
+
+.icon-logo {
+  background-position: -20px -680px;
+  width: 36px;
+  height: 36px;
+}
+
+.icon-caret-up-down {
+  background-position: -204px -332px;
+  width: 8px;
+  height: 16px;
+}
+
+.icon-caret-up {
+  background-position: -28px -338px;
+  width: 7px;
+  height: 5px;
+}
+
+.icon-caret-down {
+  background-position: -72px -338px;
+  width: 7px;
+  height: 5px;
+}
+
+.icon-bell {
+  background-position: -332px -109px;
+  width: 16px;
+  height: 20px;
+}
+
+.icon-th-large {
+  background-position: -199px -23px;
+  width: 18px;
+  height: 18px;
+}
+
+.icon-question-circle {
+  background-position: -67px -67px;
+  width: 18px;
+  height: 18px;
+}
+
+.icon-user {
+  background-position: -23px -23px;
+  width: 18px;
+  height: 18px;
+}
+
+.icon-container .icon {
+    transform: scale(1.3);
+}
+
+.icon-overview {
+  background-position: -21px -153px;
+  width: 22px;
+  height: 22px;
+}
+
+.icon-assets {
+  background-position: -65px -197px;
+  width: 22px;
+  height: 23px;
+}
+
+.icon-ht-db {
+  background-position: -110px -153px;
+  width: 21px;
+  height: 23px;
+}
+
+.icon-tools {
+  background-position: -153px -153px;
+  width: 22px;
+  height: 22px;
+}
+
+.icon-category {
+  background-position: -197px -155px;
+  width: 22px;
+  height: 18px;
+}
+
+.icon-sidebar-search {
+  background-position: -241px -153px;
+  width: 22px;
+  height: 22px;
+}
+
+.icon-report {
+  background-position: -329px -153px;
+  width: 22px;
+  height: 22px;
+}
+
+.icon-arrow-down {
+  mask-image: url("../icons/qlts-icon.svg");
+  mask-position: -158px -249px;
+  background-color: #fff;
+  width: 11px;
+  height: 7px;
+}
+
+.icon-arrow-up {
+  mask-image: url("../icons/qlts-icon.svg");
+  mask-position: -114px -249px;
+  background-color: #fff;
+  width: 12px;
+  height: 7px;
+}
+
+.icon-arrow-left {
+  mask-image: url("../icons/qlts-icon.svg");
+  mask-position: -73px -246px;
+  background-color: #fff;
+  width: 7px;
+  height: 12px;
+}
+
+.icon-arrow-right {
+  mask-image: url("../icons/qlts-icon.svg");
+  mask-position: -29px -246px;
+  background-color: #fff;
+  width: 7px;
+  height: 12px;
+}
+
+.icon-search {
+  background-position: -243px -23px;
+  width: 18px;
+  height: 18px;
+}
+
+.icon-filter {
+  background-position: -243px -68px;
+  width: 17px;
+  height: 16px;
+}
+
+.icon-plus {
+  mask-image: url("../icons/qlts-icon.svg");
+  mask-position: -467px -423px;
+  background-color: #fff;
+  width: 10px;
+  height: 10px;
+}
+
+.icon-file-excel {
+  background-position: -287px -111px;
+  width: 18px;
+  height: 17px;
+}
+
+.icon-trash {
+  background-position: -463px -111px;
+  width: 18px;
+  height: 18px;
+}
+
+.icon-pencil {
+  background-position: -156px -68px;
+  width: 16px;
+  height: 16px;
+}
+
+.icon-clone {
+  background-position: -244px -112px;
+  width: 16px;
+  height: 16px;
+}
+
+.icon-arrow-pag-left {
+  mask-image: url("../icons/qlts-icon.svg");
+  mask-position: -206px -248px;
+  background-color: #182026;
+  width: 5px;
+  height: 8px;
+}
+.icon-arrow-pag-right {
+  mask-image: url("../icons/qlts-icon.svg");
+  mask-position: -250px -248px;
+  background-color: #182026;
+  width: 5px;
+  height: 8px;
+}
