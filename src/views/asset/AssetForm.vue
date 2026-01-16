@@ -19,6 +19,10 @@
         <MsCombobox
           v-model="form.departmentId"
           :options="departments"
+          itemValue="id"
+          itemCode="code"
+          itemText="name"
+          displayMode="code"
           placeholder="Chọn mã bộ phận sử dụng"
         />
       </div>
@@ -32,6 +36,10 @@
         <MsCombobox
           v-model="form.assetTypeId"
           :options="assetTypes"
+          itemValue="id"
+          itemCode="code"
+          itemText="name"
+          displayMode="code"
           placeholder="Chọn mã loại tài sản"
         />
       </div>
@@ -77,8 +85,10 @@
       </div>
 
     <template #footer>
-      <MsButton type="default" @click="handleClose" style="min-width: 100px;">Hủy</MsButton>
-      <MsButton type="primary" @click="handleSave" style="min-width: 100px;">Lưu</MsButton>
+      <MsButton type="default" @click="handleClose" style="min-width: 100px;" :disabled="isLoading">Hủy</MsButton>
+      <MsButton type="primary" @click="handleSave" style="min-width: 100px;" :disabled="isLoading">
+        {{ isLoading ? 'Đang lưu...' : 'Lưu' }}
+      </MsButton>
     </template>
   </MsDialog>
 </template>
@@ -89,6 +99,7 @@ import MsDialog from '@/components/MsDialog.vue';
 import MsInput from '@/components/MsInput.vue';
 import MsCombobox from '@/components/MsCombobox.vue';
 import MsButton from '@/components/MsButton.vue';
+import fixedAssetApi from '@/apis/fixedAssetApi';
 
 const props = defineProps({
   modelValue: Boolean,
@@ -121,6 +132,32 @@ const form = ref({
   namSuDung: 0,
   soNamSuDung: 0,
   giaTriHaoMonNam: 0
+});
+
+const isLoading = ref(false);
+
+// Watch departmentId để tự động điền departmentName
+watch(() => form.value.departmentId, (newId) => {
+  if (newId) {
+    const dept = props.departments?.find(d => d.id === newId);
+    if (dept) {
+      form.value.departmentName = dept.name;
+    }
+  } else {
+    form.value.departmentName = '';
+  }
+});
+
+// Watch assetTypeId để tự động điền assetTypeName
+watch(() => form.value.assetTypeId, (newId) => {
+  if (newId) {
+    const type = props.assetTypes?.find(t => t.id === newId);
+    if (type) {
+      form.value.assetTypeName = type.name;
+    }
+  } else {
+    form.value.assetTypeName = '';
+  }
 });
 
 // Reset form khi initialData thay đổi
@@ -157,10 +194,58 @@ const handleClose = () => {
   resetForm();
 };
 
-const handleSave = () => {
-  console.log('Lưu tài sản:', form.value);
-  emit('save', form.value);
-  handleClose();
+const handleSave = async () => {
+  try {
+    isLoading.value = true;
+
+    // Validate dữ liệu cơ bản
+    if (!form.value.assetCode?.trim()) {
+      alert('Vui lòng nhập mã tài sản');
+      return;
+    }
+    if (!form.value.assetName?.trim()) {
+      alert('Vui lòng nhập tên tài sản');
+      return;
+    }
+
+    const formData = {
+      fixed_asset_code: form.value.assetCode,
+      fixed_asset_name: form.value.assetName,
+      department_id: form.value.departmentId,
+      department_name: form.value.departmentName,
+      fixed_asset_category_id: form.value.assetTypeId,
+      fixed_asset_category_name: form.value.assetTypeName,
+      quantity: form.value.quantity,
+      cost: form.value.nguyenGia,
+      depreciation_rate: form.value.tyLeHaoMon,
+      purchase_date: form.value.ngayMua,
+      used_start_date: form.value.ngayBatDauSuDung,
+      tracked_year: form.value.namBatDauTheoDoi,
+      used_years: form.value.soNamSuDung,
+      depreciation_value_year: form.value.giaTriHaoMonNam
+    };
+
+    if (props.mode === 'add') {
+      await fixedAssetApi.create(formData);
+      alert('Thêm tài sản thành công!');
+    } else {
+      // Thêm API update khi backend hỗ trợ
+      console.log('Cập nhật tài sản:', formData);
+      alert('Sửa tài sản thành công!');
+    }
+
+    emit('save', form.value);
+    handleClose();
+  } catch (error) {
+    console.error('Lỗi khi lưu tài sản:', error);
+    if (error.response?.data?.message) {
+      alert(`Lỗi: ${error.response.data.message}`);
+    } else {
+      alert('Không thể lưu tài sản. Vui lòng thử lại!');
+    }
+  } finally {
+    isLoading.value = false;
+  }
 };
 </script>
 
@@ -175,7 +260,7 @@ const handleSave = () => {
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 /* Các lớp định nghĩa độ rộng ô */

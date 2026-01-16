@@ -58,7 +58,6 @@ const close = () => {
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  border-bottom: 1px solid #e0e0e0;
 }
 
 .ms-popup-title {
@@ -93,7 +92,6 @@ const close = () => {
   align-items: center;
   justify-content: flex-end; /* Nút nằm bên phải */
   gap: 10px;
-  border-top: 1px solid #e0e0e0;
   border-radius: 0 0 4px 4px;
 }
 </style>

@@ -12,6 +12,9 @@
         <MsCombobox
           v-model="selectedAssetType"
           :options="assetTypes"
+          itemValue="id"
+          itemCode="code"
+          itemText="name"
           placeholder="Loại tài sản"
           icon="icon icon-filter"
           style="width: 220px;"
@@ -20,6 +23,9 @@
         <MsCombobox
           v-model="selectedDepartment"
           :options="departments"
+          itemValue="id"
+          itemCode="code"
+          itemText="name"
           placeholder="Bộ phận sử dụng"
           icon="icon icon-filter"
           style="width: 220px;"
@@ -42,7 +48,7 @@
       </div>
     </div>
 
-    <MsTable :columns="tableColumns" :data="assetData">
+    <MsTable :columns="tableColumns" :data="paginatedAssetData">
 
         <template #nguyenGia="{ value }">
             <div style="text-align: right;">{{ formatMoney(value) }}</div>
@@ -140,7 +146,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import fixedAssetApi from '@/apis/fixedAssetApi';
 import MsButton from '@/components/MsButton.vue';
 import MsInput from '@/components/MsInput.vue';
 import MsCombobox from '@/components/MsCombobox.vue';
@@ -203,15 +210,9 @@ const formData = ref({
 });
 
 // --- Mock Data Options ---
-const assetTypes = [
-    { id: 'MT', name: 'Máy vi tính xách tay' },
-    { id: 'OTO', name: 'Ô tô con' }
-];
+const assetTypes = ref([]);
 
-const departments = [
-    { id: 'HC', name: 'Phòng Hành chính Kế toán' },
-    { id: 'TC', name: 'Phòng Tài chính Tổng hợp' }
-];
+const departments = ref([]);
 
 // --- Table Configuration ---
 const tableColumns = [
@@ -230,40 +231,98 @@ const tableColumns = [
 ];
 
 // --- Mock Data Rows ---
-const assetData = ref([
-    { id: 1, stt: 1, assetCode: '55H7WN72/2022', assetName: 'Dell Inspiron 3467', assetTypeName: 'Máy vi tính xách tay', departmentName: 'Phòng Hành chính Kế toán', quantity: 1, nguyenGia: 20000000, hmKhLuyKe: 894000, giaTriConLai: 19106000 },
-    { id: 2, stt: 2, assetCode: 'MXT88618', assetName: 'Máy tính xách tay Fujitsu', assetTypeName: 'Máy vi tính xách tay', departmentName: 'Phòng Hành chính Kế toán', quantity: 1, nguyenGia: 10000000, hmKhLuyKe: 1225000, giaTriConLai: 8775000 },
-    { id: 3, stt: 3, assetCode: '37H7WN72/2022', assetName: 'Dell Inspiron 3467', assetTypeName: 'Máy vi tính xách tay', departmentName: 'Phòng Hành chính Kế toán', quantity: 4, nguyenGia: 40000000, hmKhLuyKe: 1730000, giaTriConLai: 38270000 },
-    { id: 4, stt: 4, assetCode: 'MXT8866', assetName: 'Máy tính xách tay Fujitsu', assetTypeName: 'Máy vi tính xách tay', departmentName: 'Phòng Thư ký', quantity: 1, nguyenGia: 5000000, hmKhLuyKe: 1646000, giaTriConLai: 3354000 },
-    { id: 5, stt: 5, assetCode: '14H7WN72/2019', assetName: 'Dell Latitude E 5450', assetTypeName: 'Máy vi tính xách tay', departmentName: 'Phòng Hành chính Kế toán', quantity: 1, nguyenGia: 10000000, hmKhLuyKe: 2456000, giaTriConLai: 7544000 },
-    { id: 6, stt: 6, assetCode: 'D8PQ3F2/2017', assetName: 'DELL Inspiron 3467', assetTypeName: 'Máy vi tính xách tay', departmentName: 'Phòng Hành chính Kế toán', quantity: 20, nguyenGia: 50000000, hmKhLuyKe: 913000, giaTriConLai: 49087000 },
-    { id: 7, stt: 7, assetCode: 'MXT8869', assetName: 'Máy tính xách tay Fujitsu', assetTypeName: 'Máy vi tính xách tay', departmentName: 'Phòng Hành chính Kế toán', quantity: 1, nguyenGia: 50000000, hmKhLuyKe: 3929000, giaTriConLai: 46071000 },
-    { id: 8, stt: 8, assetCode: '49H7WN72/2022', assetName: 'Dell Inspiron 3467', assetTypeName: 'Máy vi tính xách tay', departmentName: 'Phòng Tài chính Tổng hợp', quantity: 1, nguyenGia: 4000000, hmKhLuyKe: 432000, giaTriConLai: 3568000 },
-    { id: 9, stt: 9, assetCode: '33H7WN72/2022', assetName: 'Dell Inspiron 3467', assetTypeName: 'Máy vi tính xách tay', departmentName: 'Phòng Tài chính Tổng hợp', quantity: 1, nguyenGia: 20000000, hmKhLuyKe: 3400000, giaTriConLai: 16600000 },
-    { id: 10, stt: 10, assetCode: '22H7WN72/2019', assetName: 'Dell Latitude E 5450', assetTypeName: 'Máy vi tính xách tay', departmentName: 'Phòng Tài chính Tổng hợp', quantity: 1, nguyenGia: 40000000, hmKhLuyKe: 3091000, giaTriConLai: 36909000 },
-    { id: 11, stt: 11, assetCode: 'MXT88617', assetName: 'Máy tính xách tay Fujitsu', assetTypeName: 'Máy vi tính xách tay', departmentName: 'Phòng Tài chính Tổng hợp', quantity: 1, nguyenGia: 40000000, hmKhLuyKe: 1789000, giaTriConLai: 38211000 },
-    { id: 12, stt: 12, assetCode: '50H7WN72/2022', assetName: 'Dell Inspiron 3467', assetTypeName: 'Máy vi tính xách tay', departmentName: 'Phòng Tài chính Tổng hợp', quantity: 1, nguyenGia: 20000000, hmKhLuyKe: 1521000, giaTriConLai: 18479000 },
-    { id: 1, stt: 1, assetCode: '55H7WN72/2022', assetName: 'Dell Inspiron 3467', assetTypeName: 'Máy vi tính xách tay', departmentName: 'Phòng Hành chính Kế toán', quantity: 1, nguyenGia: 20000000, hmKhLuyKe: 894000, giaTriConLai: 19106000 },
-    { id: 2, stt: 2, assetCode: 'MXT88618', assetName: 'Máy tính xách tay Fujitsu', assetTypeName: 'Máy vi tính xách tay', departmentName: 'Phòng Hành chính Kế toán', quantity: 1, nguyenGia: 10000000, hmKhLuyKe: 1225000, giaTriConLai: 8775000 },
-    { id: 3, stt: 3, assetCode: '37H7WN72/2022', assetName: 'Dell Inspiron 3467', assetTypeName: 'Máy vi tính xách tay', departmentName: 'Phòng Hành chính Kế toán', quantity: 4, nguyenGia: 40000000, hmKhLuyKe: 1730000, giaTriConLai: 38270000 },
-    { id: 4, stt: 4, assetCode: 'MXT8866', assetName: 'Máy tính xách tay Fujitsu', assetTypeName: 'Máy vi tính xách tay', departmentName: 'Phòng Thư ký', quantity: 1, nguyenGia: 5000000, hmKhLuyKe: 1646000, giaTriConLai: 3354000 },
-    { id: 5, stt: 5, assetCode: '14H7WN72/2019', assetName: 'Dell Latitude E 5450', assetTypeName: 'Máy vi tính xách tay', departmentName: 'Phòng Hành chính Kế toán', quantity: 1, nguyenGia: 10000000, hmKhLuyKe: 2456000, giaTriConLai: 7544000 },
-    { id: 6, stt: 6, assetCode: 'D8PQ3F2/2017', assetName: 'DELL Inspiron 3467', assetTypeName: 'Máy vi tính xách tay', departmentName: 'Phòng Hành chính Kế toán', quantity: 20, nguyenGia: 50000000, hmKhLuyKe: 913000, giaTriConLai: 49087000 },
-    { id: 7, stt: 7, assetCode: 'MXT8869', assetName: 'Máy tính xách tay Fujitsu', assetTypeName: 'Máy vi tính xách tay', departmentName: 'Phòng Hành chính Kế toán', quantity: 1, nguyenGia: 50000000, hmKhLuyKe: 3929000, giaTriConLai: 46071000 },
-    { id: 8, stt: 8, assetCode: '49H7WN72/2022', assetName: 'Dell Inspiron 3467', assetTypeName: 'Máy vi tính xách tay', departmentName: 'Phòng Tài chính Tổng hợp', quantity: 1, nguyenGia: 4000000, hmKhLuyKe: 432000, giaTriConLai: 3568000 },
-    { id: 9, stt: 9, assetCode: '33H7WN72/2022', assetName: 'Dell Inspiron 3467', assetTypeName: 'Máy vi tính xách tay', departmentName: 'Phòng Tài chính Tổng hợp', quantity: 1, nguyenGia: 20000000, hmKhLuyKe: 3400000, giaTriConLai: 16600000 },
-    { id: 10, stt: 10, assetCode: '22H7WN72/2019', assetName: 'Dell Latitude E 5450', assetTypeName: 'Máy vi tính xách tay', departmentName: 'Phòng Tài chính Tổng hợp', quantity: 1, nguyenGia: 40000000, hmKhLuyKe: 3091000, giaTriConLai: 36909000 },
-    { id: 11, stt: 11, assetCode: 'MXT88617', assetName: 'Máy tính xách tay Fujitsu', assetTypeName: 'Máy vi tính xách tay', departmentName: 'Phòng Tài chính Tổng hợp', quantity: 1, nguyenGia: 40000000, hmKhLuyKe: 1789000, giaTriConLai: 38211000 },
-    { id: 12, stt: 12, assetCode: '50H7WN72/2022', assetName: 'Dell Inspiron 3467', assetTypeName: 'Máy vi tính xách tay', departmentName: 'Phòng Tài chính Tổng hợp', quantity: 1, nguyenGia: 20000000, hmKhLuyKe: 1521000, giaTriConLai: 18479000 },
-]);
+const assetData = ref([]);
+
+// Computed property để lấy dữ liệu đã phân trang
+const paginatedAssetData = computed(() => {
+    if (!assetData.value || assetData.value.length === 0) return [];
+
+    const size = parseInt(pageSize.value) || 20;
+    const start = (currentPage.value - 1) * size;
+    const end = start + size;
+
+    // Cắt dữ liệu theo trang và cập nhật STT
+    return assetData.value.slice(start, end).map((item, index) => ({
+        ...item,
+        stt: start + index + 1 // STT chính xác theo trang
+    }));
+});
+
+const loadData = async () => {
+    try {
+        const response = await fixedAssetApi.getAll();
+        console.log('Dữ liệu từ backend:', response);
+        // Ánh xạ dữ liệu từ backend (FixedAssetDto) sang format frontend
+        assetData.value = response.map((item, index) => ({
+            stt: index + 1,
+            assetCode: item.fixed_asset_code || item.fixedAssetCode || '',
+            assetName: item.fixed_asset_name || item.fixedAssetName || '',
+            assetTypeName: item.fixed_asset_category_name || item.assetCategoryName || item.assetTypeName || '',
+            departmentName: item.department_name || item.departmentName || '',
+            quantity: item.quantity || 1,
+            nguyenGia: item.cost || 0,
+            hmKhLuyKe: item.accumulated_depreciation || 0,
+            giaTriConLai: (item.cost || 0) - (item.accumulated_depreciation || 0),
+            namSuDung: item.tracked_year || new Date().getFullYear(),
+            tyLeHaoMon: item.depreciation_rate || 0,
+            giaTriHaoMonNam: item.depreciation_value_year || 0
+        }));
+        totalRecords.value = assetData.value.length;
+    } catch (error) {
+        console.error("Lỗi khi lấy dữ liệu:", error);
+        if (error.response) {
+            alert(`Lỗi ${error.response.status}: ${error.response.data?.message || 'Không thể lấy dữ liệu'}`);
+        } else if (error.request) {
+            alert("Không thể kết nối với máy chủ. Vui lòng kiểm tra backend đã chạy chưa.");
+        } else {
+            alert("Đã xảy ra lỗi: " + error.message);
+        }
+    }
+};
+
+const loadDepartments = async () => {
+    try {
+        const response = await fixedAssetApi.getDepartments();
+        console.log('Dữ liệu bộ phận từ backend:', response);
+        // Hỗ trợ cả snake_case và camelCase từ backend
+        departments.value = response.map(item => ({
+            id: item.department_id || item.departmentId,
+            code: item.department_code || item.departmentCode,
+            name: item.department_name || item.departmentName
+        }));
+    } catch (error) {
+        console.error("Lỗi khi lấy danh sách bộ phận:", error);
+    }
+};
+
+const loadAssetCategories = async () => {
+    try {
+        const response = await fixedAssetApi.getCategories();
+        console.log('Dữ liệu loại tài sản từ backend:', response);
+        // Hỗ trợ cả snake_case và camelCase từ backend
+        assetTypes.value = response.map(item => ({
+            id: item.fixed_asset_category_id || item.fixedAssetCategoryId,
+            code: item.fixed_asset_category_code || item.fixedAssetCategoryCode,
+            name: item.fixed_asset_category_name || item.fixedAssetCategoryName || item.assetCategoryName
+        }));
+    } catch (error) {
+        console.error("Lỗi khi lấy danh sách loại tài sản:", error);
+    }
+};
+
+onMounted(() => {
+    loadDepartments(); // Lấy danh sách bộ phận
+    loadAssetCategories(); // Lấy danh sách loại tài sản
+    loadData(); // Lấy danh sách tài sản
+});
 
 // --- Computed Totals ---
 const totals = computed(() => {
-    return assetData.value.reduce((acc, item) => {
-        acc.quantity += item.quantity;
-        acc.nguyenGia += item.nguyenGia;
-        acc.hmKhLuyKe += item.hmKhLuyKe;
-        acc.giaTriConLai += item.giaTriConLai;
+    return paginatedAssetData.value.reduce((acc, item) => {
+        acc.quantity += item.quantity || 0;
+        acc.nguyenGia += item.nguyenGia || 0;
+        acc.hmKhLuyKe += item.hmKhLuyKe || 0;
+        acc.giaTriConLai += item.giaTriConLai || 0;
         acc.tyLeHaoMon += item.tyLeHaoMon || 0;
         acc.giaTriHaoMonNam += item.giaTriHaoMonNam || 0;
         return acc;

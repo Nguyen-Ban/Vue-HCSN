@@ -143,6 +143,7 @@ const getTdStyle = (col, index) => {
 
 <style scoped>
 .ms-grid-container {
+    border: 1px solid #afafaf;
     background: #fff;
     border-radius: 4px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -191,12 +192,11 @@ tr:hover {
 }
 
 .ms-table-footer {
-    height: auto;
-    border-top: 1px solid #e0e0e0;
-    display: flex;
-    align-items: center;
-    padding: 0;
-    flex-shrink: 0;
+  height: auto;
+  display: flex;
+  align-items: center;
+  padding: 0;
+  flex-shrink: 0;
 }
 
 .ms-table-footer-scroll {
@@ -210,12 +210,15 @@ tr:hover {
 }
 
 tfoot {
-    background-color: #fafafa;
-    border-top: 1px solid #e0e0e0;
+  background-color: #fafafa;
 }
 
 tfoot tr {
-    border-bottom: 1px solid #e0e0e0;
+  border-bottom: none;
+}
+
+:deep(tfoot td) {
+  border-bottom: none !important;
 }
 
 tfoot td {
