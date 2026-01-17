@@ -4,7 +4,7 @@
       <div class="ms-popup-header">
         <div class="ms-popup-title">{{ title }}</div>
         <div class="ms-popup-close" @click="close" title="Đóng (Esc)">
-            <i class="fa fa-times"></i> </div>
+            <div class="icon icon-close"></div> </div>
       </div>
 
       <div class="ms-popup-body">

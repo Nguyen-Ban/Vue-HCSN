@@ -31,6 +31,12 @@ const fixedAssetApi = {
     return axiosClient.delete(url)
   },
 
+  // Xóa nhiều tài sản
+  deleteBatch(ids) {
+    const url = '/FixedAssets/batch'
+    return axiosClient.delete(url, { data: ids })
+  },
+
   // Lọc và phân trang tài sản
   getByFilter(pageNumber = 1, pageSize = 20, keyword = '', departmentId = '', categoryId = '') {
     const url = '/FixedAssets/filter'

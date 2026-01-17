@@ -5,19 +5,19 @@
     <section class="section">
       <h2>1. Buttons</h2>
       <div class="row">
-        <MSButton type="primary">Thêm tài sản</MSButton>
-        <MSButton type="primary" icon="fa fa-plus" positionIcon="left">Thêm (Icon Trái)</MSButton>
-        <MSButton type="secondary">Hủy bỏ</MSButton>
-        <MSButton type="danger">Xóa dữ liệu</MSButton>
-        <MSButton type="link" icon="fa fa-pencil" title="Sửa"></MSButton>
-        <MSButton type="link" icon="fa fa-trash" style="color: red" title="Xóa"></MSButton>
+        <MsButton type="primary">Thêm tài sản</MsButton>
+        <MsButton type="primary" icon="fa fa-plus" positionIcon="left">Thêm (Icon Trái)</MsButton>
+        <MsButton type="secondary">Hủy bỏ</MsButton>
+        <MsButton type="danger">Xóa dữ liệu</MsButton>
+        <MsButton type="link" icon="fa fa-pencil" title="Sửa"></MsButton>
+        <MsButton type="link" icon="fa fa-trash" style="color: red" title="Xóa"></MsButton>
       </div>
     </section>
 
     <section class="section">
       <h2>2. Inputs & Combobox</h2>
       <div class="row">
-        <MSInput
+        <MsInput
             label="Mã tài sản"
             v-model="formData.assetCode"
             placeholder="Nhập mã tài sản"
@@ -25,20 +25,20 @@
             :errorMessage="!formData.assetCode ? 'Mã không được để trống' : ''"
         />
 
-        <MSInput
+        <MsInput
             label="Nguyên giá"
             type="number"
             v-model="formData.cost"
             class="text-right"
         />
 
-        <MSInput
+        <MsInput
             placeholder="Tìm kiếm tài sản..."
             icon="fa fa-search"
             v-model="searchText"
         />
 
-        <MSCombobox
+        <MsCombobox
             label="Loại tài sản"
             v-model="formData.categoryId"
             :options="categoryOptions"
@@ -56,7 +56,7 @@
     <section class="section">
       <h2>3. Table & Pagination</h2>
       <div style="height: 400px; border: 1px solid #ccc;">
-        <MSTable
+        <MsTable
             :columns="tableColumns"
             :data="tableData"
         >
@@ -67,37 +67,37 @@
             </template>
 
              <template #action="{ row }">
-                <MSButton type="link" icon="fa fa-pencil" @click="editItem(row)"></MSButton>
-                <MSButton type="link" icon="fa fa-clone" @click="duplicateItem(row)"></MSButton>
+                <MsButton type="link" icon="fa fa-pencil" @click="editItem(row)"></MsButton>
+                <MsButton type="link" icon="fa fa-clone" @click="duplicateItem(row)"></MsButton>
             </template>
 
             <template #footer>
-                <MSPagination
+                <MsPagination
                     :total="200"
                     v-model:pageSize="pageSize"
                     v-model:currentPage="currentPage"
                 />
             </template>
-        </MSTable>
+        </MsTable>
       </div>
     </section>
 
     <section class="section">
         <h2>4. Popup (Dialog)</h2>
-        <MSButton @click="showDialog = true">Mở Form Thêm Mới</MSButton>
+        <MsButton @click="showDialog = true">Mở Form Thêm Mới</MsButton>
 
-        <MSDialog v-model="showDialog" title="Thêm mới tài sản">
+        <MsDialog v-model="showDialog" title="Thêm mới tài sản">
             <div class="form-grid">
-                <MSInput label="Mã tài sản" required v-model="formData.assetCode" />
-                <MSInput label="Tên tài sản" required v-model="formData.assetName" />
-                <MSCombobox label="Bộ phận sử dụng" :options="deptOptions" itemText="name" itemValue="id" />
-                <MSInput label="Số lượng" type="number" />
-                <MSInput label="Nguyên giá" type="number" />
+                <MsInput label="Mã tài sản" required v-model="formData.assetCode" />
+                <MsInput label="Tên tài sản" required v-model="formData.assetName" />
+                <MsCombobox label="Bộ phận sử dụng" :options="deptOptions" itemText="name" itemValue="id" />
+                <MsInput label="Số lượng" type="number" />
+                <MsInput label="Nguyên giá" type="number" />
             </div>
 
             <template #footer>
-                <MSButton type="secondary" @click="showDialog = false">Hủy</MSButton>
-                <MSButton type="primary" @click="saveData">Lưu</MSButton>
+                <MsButton type="secondary" @click="showDialog = false">Hủy</MsButton>
+                <MsButton type="primary" @click="saveData">Lưu</MsButton>
             </template>
         </MSDialog>
     </section>
@@ -108,12 +108,12 @@
 import { ref, reactive } from 'vue';
 
 // Import Base Components
-import MSButton from './MSButton.vue';
-import MSInput from './MSInput.vue';
-import MSCombobox from './MSCombobox.vue';
-import MSTable from './MSTable.vue';
-import MSPagination from './MSPagination.vue';
-import MSDialog from './MSDialog.vue';
+import MsButton from './MsButton.vue';
+import MsInput from './MsInput.vue';
+import MsCombobox from './MsCombobox.vue';
+import MsTable from './MsTable.vue';
+import MsPagination from './MsPagination.vue';
+import MsDialog from './MsDialog.vue';
 // --- DATA MẪU ---
 const searchText = ref('');
 const showDialog = ref(false);

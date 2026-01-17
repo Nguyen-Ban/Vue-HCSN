@@ -189,3 +189,11 @@
   width: 5px;
   height: 8px;
 }
+
+.icon-close {
+  mask-image: url("../icons/qlts-icon.svg");
+  mask-position: -375px -287px;
+  background-color: #182026;
+  width: 18px;
+  height: 18px;
+}

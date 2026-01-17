@@ -41,14 +41,18 @@
           <button class="tool-btn shadow-btn" title="Xuất Excel">
             <div class="icon icon-file-excel"></div>
           </button>
-          <button class="tool-btn shadow-btn btn-delete-tool" title="Xóa">
+          <button
+            class="tool-btn shadow-btn btn-delete-tool"
+            title="Xóa"
+            @click="confirmDeleteSelected"
+          >
             <div class="icon icon-trash"></div>
           </button>
         </div>
       </div>
     </div>
 
-    <MsTable :columns="tableColumns" :data="assetData">
+    <MsTable :columns="tableColumns" :data="assetData" v-model:selected="selectedAssetIds">
       <template #cost="{ value }">
         <div style="text-align: right">{{ formatMoney(value) }}</div>
       </template>
@@ -181,11 +185,12 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import fixedAssetApi from '../../apis/fixedAssetApi'
-import MsButton from '../../components/MSButton.vue'
-import MsInput from '../../components/MSInput.vue'
-import MsCombobox from '../../components/MSCombobox.vue'
-import MsTable from '../../components/MSTable.vue'
+import MsButton from '../../components/MsButton.vue'
+import MsInput from '../../components/MsInput.vue'
+import MsCombobox from '../../components/MsCombobox.vue'
+import MsTable from '../../components/MsTable.vue'
 import AssetForm from './AssetForm.vue'
+import { showConfirm, showToast } from '../../stores/notification'
 
 // Debounce helper
 function debounce(func, wait) {
@@ -280,6 +285,7 @@ const tableColumns = [
 
 // --- Mock Data Rows ---
 const assetData = ref([])
+const selectedAssetIds = ref([])
 
 // Map dữ liệu từ backend response về format frontend
 const mapAssetData = (items, pageNumber, pageSizeValue) => {
@@ -488,6 +494,54 @@ const goToPage = (page) => {
   if (!pageSize.value) return
   const bounded = Math.min(Math.max(1, page), totalPages.value)
   currentPage.value = bounded
+}
+
+// --- Delete Selected ---
+const confirmDeleteSelected = () => {
+  const count = selectedAssetIds.value.length
+  if (count === 0) {
+    showToast({ message: 'Vui lòng chọn ít nhất một tài sản để xóa.', type: 'warning' })
+    return
+  }
+
+  if (count === 1) {
+    const id = selectedAssetIds.value[0]
+    const row = assetData.value.find((r) => r.id === id)
+    const codeName = row ? `${row.assetCode} - ${row.assetName}` : id
+    showConfirm({
+      title: 'Xóa tài sản',
+      text: `Bạn có muốn xóa tài sản «${codeName}» ?`,
+      onConfirm: async () => {
+        try {
+          const res = await fixedAssetApi.delete(id)
+          showToast({ message: res?.message || 'Xóa thành công.', type: 'success' })
+          selectedAssetIds.value = []
+          await loadData()
+        } catch (err) {
+          console.error(err)
+          showToast({ message: 'Xóa thất bại.', type: 'error' })
+        }
+      },
+    })
+  } else {
+    const countText = String(count).padStart(2, '0')
+    showConfirm({
+      title: 'Xóa nhiều tài sản',
+      text: `${countText} tài sản đã được chọn. Bạn có muốn xóa các tài sản này khỏi danh sách?`,
+      onConfirm: async () => {
+        try {
+          const res = await fixedAssetApi.deleteBatch(selectedAssetIds.value)
+          const msg = res?.message || `Đã xóa ${selectedAssetIds.value.length} bản ghi.`
+          showToast({ message: msg, type: 'success' })
+          selectedAssetIds.value = []
+          await loadData()
+        } catch (err) {
+          console.error(err)
+          showToast({ message: 'Không xóa được bản ghi nào.', type: 'error' })
+        }
+      },
+    })
+  }
 }
 </script>
 

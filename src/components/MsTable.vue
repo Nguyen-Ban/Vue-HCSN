@@ -3,9 +3,9 @@
     <div class="ms-table-scroll" ref="bodyScroll" @scroll="syncFooterScroll">
       <table>
         <colgroup>
-          <col style="width: 50px">
-          <col v-for="col in columns" :key="col.key" :style="{ width: col.width }">
-          <col style="width: 100px">
+          <col style="width: 50px" />
+          <col v-for="col in columns" :key="col.key" :style="{ width: col.width }" />
+          <col style="width: 100px" />
         </colgroup>
         <thead>
           <tr>
@@ -22,9 +22,7 @@
               {{ col.title }}
             </th>
 
-            <th class="ms-th-action sticky-col-right" style="text-align: center">
-              Chức năng
-            </th>
+            <th class="ms-th-action sticky-col-right" style="text-align: center">Chức năng</th>
           </tr>
         </thead>
         <tbody>
@@ -65,130 +63,152 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue';
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
 
 const props = defineProps({
   columns: Array, // [{ key: 'assetCode', title: 'Mã tài sản', align: 'left', width: '100px' }]
-  data: Array
-});
+  data: Array,
+  // Cho phép parent bind v-model:selected để nhận danh sách ID các dòng được chọn
+  selected: {
+    type: Array,
+    default: () => [],
+  },
+})
 
-const selectedRows = ref([]); // Chứa ID các dòng được chọn
-const bodyScroll = ref(null);
-const footerScroll = ref(null);
+const emit = defineEmits(['update:selected'])
+
+const selectedRows = ref([]) // Chứa ID các dòng được chọn
+const bodyScroll = ref(null)
+const footerScroll = ref(null)
 
 // Logic chọn tất cả
 const isAllSelected = computed(() => {
-    return props.data.length > 0 && selectedRows.value.length === props.data.length;
-});
+  return props.data.length > 0 && selectedRows.value.length === props.data.length
+})
 const toggleAll = (e) => {
-    if (e.target.checked) selectedRows.value = props.data.map(i => i.id);
-    else selectedRows.value = [];
-};
+  if (e.target.checked) selectedRows.value = props.data.map((i) => i.id)
+  else selectedRows.value = []
+  emit('update:selected', selectedRows.value)
+}
+
+// Đồng bộ từ prop selected xuống local và ngược lại khi thay đổi
+watch(
+  () => props.selected,
+  (val) => {
+    selectedRows.value = Array.isArray(val) ? [...val] : []
+  },
+  { immediate: true, deep: true },
+)
+
+watch(selectedRows, (val) => {
+  emit('update:selected', val)
+})
 
 // Hàm format đơn giản (nếu không dùng slot)
 const formatData = (val, type) => {
-    if (type === 'number') return new Intl.NumberFormat('vi-VN').format(val);
-    return val;
-};
+  if (type === 'number') return new Intl.NumberFormat('vi-VN').format(val)
+  return val
+}
 
 // Hàm tính toán sticky position
 const getThStyle = (col, index) => {
-    const baseStyle = { textAlign: col.align || 'left' };
-    if (!col.sticky) return baseStyle;
+  const baseStyle = { textAlign: col.align || 'left' }
+  if (!col.sticky) return baseStyle
 
-    let leftPos = 40; // checkbox width
-    for (let i = 0; i < index; i++) {
-        const w = props.columns[i].width;
-        leftPos += parseInt(w);
-    }
+  let leftPos = 40 // checkbox width
+  for (let i = 0; i < index; i++) {
+    const w = props.columns[i].width
+    leftPos += parseInt(w)
+  }
 
-    return {
-        ...baseStyle,
-        position: 'sticky',
-        left: leftPos + 'px',
-        zIndex: 9,
-        backgroundColor: '#f5f5f5',
-    };
-};
+  return {
+    ...baseStyle,
+    position: 'sticky',
+    left: leftPos + 'px',
+    zIndex: 9,
+    backgroundColor: '#f5f5f5',
+  }
+}
 
 const getTdStyle = (col, index) => {
-    const baseStyle = { textAlign: col.align || 'left' };
-    if (!col.sticky) return baseStyle;
+  const baseStyle = { textAlign: col.align || 'left' }
+  if (!col.sticky) return baseStyle
 
-    let leftPos = 40; // checkbox width
-    for (let i = 0; i < index; i++) {
-        const w = props.columns[i].width;
-        leftPos += parseInt(w);
-    }
+  let leftPos = 40 // checkbox width
+  for (let i = 0; i < index; i++) {
+    const w = props.columns[i].width
+    leftPos += parseInt(w)
+  }
 
-    return {
-        ...baseStyle,
-        position: 'sticky',
-        left: leftPos + 'px',
-        backgroundColor: '#fff',
-        zIndex: 2,
-    };
-};
+  return {
+    ...baseStyle,
+    position: 'sticky',
+    left: leftPos + 'px',
+    backgroundColor: '#fff',
+    zIndex: 2,
+  }
+}
 
-  // Đồng bộ cuộn ngang giữa phần thân bảng và footer tổng
-  const syncFooterScroll = () => {
-    if (!bodyScroll.value || !footerScroll.value) return;
-    footerScroll.value.scrollLeft = bodyScroll.value.scrollLeft;
-  };
+// Đồng bộ cuộn ngang giữa phần thân bảng và footer tổng
+const syncFooterScroll = () => {
+  if (!bodyScroll.value || !footerScroll.value) return
+  footerScroll.value.scrollLeft = bodyScroll.value.scrollLeft
+}
 
-  onMounted(() => {
-    nextTick(syncFooterScroll);
-  });
+onMounted(() => {
+  nextTick(syncFooterScroll)
+})
 </script>
 
 <style scoped>
 .ms-grid-container {
-    border: 1px solid #afafaf;
-    background: #fff;
-    border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    display: flex;
-    flex-direction: column;
-    font-size: 13px;
+  border: 1px solid #afafaf;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
 }
 .ms-table-scroll {
-    overflow: auto;
-    flex: 1;
-    min-height: 0;
-    width: 100%;
-    box-sizing: border-box;
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 table {
-    border-collapse: collapse;
-    width: 100%;
-    table-layout: fixed;
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed;
 }
 th {
-    background-color: #f5f5f5;
-    font-weight: 700;
-    padding: 10px 16px;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    border-bottom: 1px solid #e0e0e0;
-    box-sizing: border-box;
+  background-color: #f5f5f5;
+  font-weight: 700;
+  padding: 10px 16px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-bottom: 1px solid #e0e0e0;
+  box-sizing: border-box;
 }
 td {
-    padding: 10px 16px;
-    border-bottom: 1px solid #e0e0e0;
-    box-sizing: border-box;
+  padding: 10px 16px;
+  border-bottom: 1px solid #e0e0e0;
+  box-sizing: border-box;
 }
 tr:hover {
-    background-color: #f2f9ff; /* Hover màu xanh nhạt theo style MISA */
+  background-color: #f2f9ff; /* Hover màu xanh nhạt theo style MISA */
 }
-.ms-th-checkbox, .ms-td-checkbox {
-    width: 50px;
-    text-align: center;
+.ms-th-checkbox,
+.ms-td-checkbox {
+  width: 50px;
+  text-align: center;
 }
 .action-group {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
 }
 
 .ms-table-footer {
@@ -222,12 +242,12 @@ tfoot tr {
 }
 
 tfoot td {
-    padding: 10px 16px !important;
-    font-weight: 500;
-    text-align: right;
+  padding: 10px 16px !important;
+  font-weight: 500;
+  text-align: right;
 }
 
 tfoot td:first-child {
-    text-align: left;
+  text-align: left;
 }
 </style>

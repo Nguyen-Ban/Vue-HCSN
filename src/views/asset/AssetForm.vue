@@ -93,10 +93,10 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import MsDialog from '../../components/MSDialog.vue'
-import MsInput from '../../components/MSInput.vue'
-import MsCombobox from '../../components/MSCombobox.vue'
-import MsButton from '../../components/MSButton.vue'
+import MsDialog from '../../components/MsDialog.vue'
+import MsInput from '../../components/MsInput.vue'
+import MsCombobox from '../../components/MsCombobox.vue'
+import MsButton from '../../components/MsButton.vue'
 import fixedAssetApi from '../../apis/fixedAssetApi'
 const props = defineProps({
   modelValue: Boolean,
@@ -133,12 +133,12 @@ const form = ref({
 
 const isLoading = ref(false)
 
-// Chuyển mọi giá trị ngày về định dạng yyyy-MM-dd để input type="date" đọc được
+// Chuẩn hoá ngày thành yyyy-MM-dd để input type="date" đọc được
+// Giữ nguyên cả các ngày rất nhỏ (ví dụ 0001-01-01) theo yêu cầu backend
 const normalizeDate = (value) => {
   if (!value) return ''
   const d = new Date(value)
-  // Kiểm tra ngày hợp lệ và không phải ngày null (0001-01-01)
-  if (Number.isNaN(d.getTime()) || d.getFullYear() < 1900) return ''
+  if (Number.isNaN(d.getTime())) return ''
   return d.toISOString().slice(0, 10)
 }
 
@@ -188,6 +188,14 @@ watch(
     if (newDate) {
       const year = new Date(newDate).getFullYear()
       form.value.trackedYear = year
+      // Đồng bộ ngày bắt đầu sử dụng theo ngày mua
+      // - Ở chế độ thêm: luôn gán theo ngày mua
+      // - Ở chế độ sửa: chỉ gán nếu đang trống (backend không có)
+      if (props.mode === 'add') {
+        form.value.usedStartDate = newDate
+      } else if (!form.value.usedStartDate) {
+        form.value.usedStartDate = newDate
+      }
     } else {
       form.value.trackedYear = new Date().getFullYear()
     }
@@ -202,11 +210,13 @@ watch(
       // Map dữ liệu từ backend (snake_case hoặc camelCase) vào form
       const departmentCode = newData.department_code || newData.departmentCode
       const departmentName = newData.department_name || newData.departmentName || ''
-      const departmentIdRaw =
-        newData.department_id ||
-        newData.departmentId ||
-        findIdByCodeOrName(props.departments, departmentCode, departmentName)
-      const departmentId = departmentIdRaw ? String(departmentIdRaw) : ''
+
+      // Ưu tiên lấy ID trực tiếp từ backend, nếu không có thì mới tìm bằng code/name
+      let departmentIdRaw = newData.department_id || newData.departmentId
+      if (!departmentIdRaw && (departmentCode || departmentName)) {
+        departmentIdRaw = findIdByCodeOrName(props.departments, departmentCode, departmentName)
+      }
+      const departmentId = departmentIdRaw || ''
 
       const assetTypeCode =
         newData.fixed_asset_category_code || newData.fixedAssetCategoryCode || newData.assetTypeCode
@@ -215,18 +225,45 @@ watch(
         newData.assetTypeName ||
         newData.assetCategoryName ||
         ''
-      const assetTypeIdRaw =
-        newData.fixed_asset_category_id ||
-        newData.assetTypeId ||
-        findIdByCodeOrName(props.assetTypes, assetTypeCode, assetTypeName)
-      const assetTypeId = assetTypeIdRaw ? String(assetTypeIdRaw) : ''
+
+      // Ưu tiên lấy ID trực tiếp từ backend, nếu không có thì mới tìm bằng code/name
+      let assetTypeIdRaw = newData.fixed_asset_category_id || newData.assetTypeId
+      if (!assetTypeIdRaw && (assetTypeCode || assetTypeName)) {
+        assetTypeIdRaw = findIdByCodeOrName(props.assetTypes, assetTypeCode, assetTypeName)
+      }
+      const assetTypeId = assetTypeIdRaw || ''
 
       console.log('=== DEBUG FORM DATA ===')
-      console.log('departmentCode:', departmentCode, '| departmentId:', departmentId)
-      console.log('assetTypeCode:', assetTypeCode, '| assetTypeId:', assetTypeId)
+      console.log(
+        'departmentCode:',
+        departmentCode,
+        '| departmentId:',
+        departmentId,
+        '| type:',
+        typeof departmentId,
+      )
+      console.log(
+        'assetTypeCode:',
+        assetTypeCode,
+        '| assetTypeId:',
+        assetTypeId,
+        '| type:',
+        typeof assetTypeId,
+      )
       console.log('purchase_date:', newData.purchase_date)
       console.log('departments:', props.departments)
       console.log('assetTypes:', props.assetTypes)
+
+      // Kiểm tra xem có tìm thấy department trong danh sách không
+      const foundDept = props.departments?.find((d) => d.id == departmentId)
+      console.log('Found department:', foundDept)
+      const foundAssetType = props.assetTypes?.find((t) => t.id == assetTypeId)
+      console.log('Found assetType:', foundAssetType)
+
+      // Chuẩn hoá ngày mua/sử dụng
+      const purchaseDateFormatted = normalizeDate(newData.purchase_date || '')
+      const usedStartDateFormatted = normalizeDate(newData.used_start_date || '')
+      const usedStartDateFinal = usedStartDateFormatted || purchaseDateFormatted || ''
 
       form.value = {
         id: newData.id || newData.fixed_asset_id,
@@ -240,8 +277,8 @@ watch(
         quantity: newData.quantity || 1,
         cost: newData.cost || 0,
         depreciationRate: newData.depreciation_rate || 0,
-        purchaseDate: normalizeDate(newData.purchase_date || ''),
-        usedStartDate: normalizeDate(newData.used_start_date || ''),
+        purchaseDate: purchaseDateFormatted,
+        usedStartDate: usedStartDateFinal,
         trackedYear: newData.tracked_year || new Date().getFullYear(),
         lifeTime: newData.life_time || 0,
         depreciationValueYear: newData.depreciation_value_year || 0,
@@ -266,8 +303,11 @@ const resetForm = () => {
     quantity: 1,
     cost: 0,
     depreciationRate: 0,
-    purchaseDate: '',
-    usedStartDate: '',
+    // Mặc định ngày mua = hôm nay cho form Thêm
+    purchaseDate: normalizeDate(new Date()),
+    // Ngày bắt đầu sử dụng mặc định theo ngày mua
+    usedStartDate: normalizeDate(new Date()),
+    // Tự động set năm theo dõi theo ngày mua hiện tại
     trackedYear: new Date().getFullYear(),
     lifeTime: 0,
     depreciationValueYear: 0,
