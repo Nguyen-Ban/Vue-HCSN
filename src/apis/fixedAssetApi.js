@@ -25,6 +25,26 @@ const fixedAssetApi = {
     return axiosClient.get(url)
   },
 
+  // Xóa tài sản theo ID
+  delete(id) {
+    const url = `/FixedAssets/${id}`
+    return axiosClient.delete(url)
+  },
+
+  // Lọc và phân trang tài sản
+  getByFilter(pageNumber = 1, pageSize = 20, keyword = '', departmentId = '', categoryId = '') {
+    const url = '/FixedAssets/filter'
+    return axiosClient.get(url, {
+      params: {
+        pageNumber,
+        pageSize,
+        keyword: keyword || undefined,
+        departmentId: departmentId || undefined,
+        fixedAssetCategoryId: categoryId || undefined,
+      },
+    })
+  },
+
   // Lấy danh sách loại tài sản
   getCategories() {
     const url = '/FixedAssetCategories'

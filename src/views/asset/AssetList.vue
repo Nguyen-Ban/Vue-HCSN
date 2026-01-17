@@ -48,7 +48,7 @@
       </div>
     </div>
 
-    <MsTable :columns="tableColumns" :data="paginatedAssetData">
+    <MsTable :columns="tableColumns" :data="assetData">
       <template #cost="{ value }">
         <div style="text-align: right">{{ formatMoney(value) }}</div>
       </template>
@@ -179,13 +179,26 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import fixedAssetApi from '@/apis/fixedAssetApi'
-import MsButton from '@/components/MsButton.vue'
-import MsInput from '@/components/MsInput.vue'
-import MsCombobox from '@/components/MsCombobox.vue'
-import MsTable from '@/components/MsTable.vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import fixedAssetApi from '../../apis/fixedAssetApi'
+import MsButton from '../../components/MSButton.vue'
+import MsInput from '../../components/MSInput.vue'
+import MsCombobox from '../../components/MSCombobox.vue'
+import MsTable from '../../components/MSTable.vue'
 import AssetForm from './AssetForm.vue'
+
+// Debounce helper
+function debounce(func, wait) {
+  let timeout
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout)
+      func(...args)
+    }
+    clearTimeout(timeout)
+    timeout = setTimeout(later, wait)
+  }
+}
 
 // --- State ---
 const searchText = ref('')
@@ -202,20 +215,22 @@ const pageButtons = computed(() => {
   const total = totalPages.value
   const cur = currentPage.value
 
-  if (total <= 7) {
+  // Chỉ hiển thị toàn bộ số nếu trang <= 4
+  if (total <= 4) {
     for (let i = 1; i <= total; i++) pages.push(i)
     return pages
   }
 
+  // Format: < 1 2 ... 5 6 > khi có nhiều trang
   pages.push(1, 2)
 
-  if (cur > 4) pages.push('...-left')
+  if (cur > 3) pages.push('...')
 
   const start = Math.max(3, cur - 1)
   const end = Math.min(total - 2, cur + 1)
   for (let i = start; i <= end; i++) pages.push(i)
 
-  if (cur < total - 3) pages.push('...-right')
+  if (cur < total - 2) pages.push('...')
 
   pages.push(total - 1, total)
   return pages.filter((v, idx, arr) => arr.indexOf(v) === idx)
@@ -266,61 +281,68 @@ const tableColumns = [
 // --- Mock Data Rows ---
 const assetData = ref([])
 
-// Computed property để lấy dữ liệu đã phân trang
-const paginatedAssetData = computed(() => {
-  if (!assetData.value || assetData.value.length === 0) return []
-
-  const size = parseInt(pageSize.value) || 20
-  const start = (currentPage.value - 1) * size
-  const end = start + size
-
-  // Cắt dữ liệu theo trang và cập nhật STT
-  return assetData.value.slice(start, end).map((item, index) => ({
-    ...item,
-    stt: start + index + 1, // STT chính xác theo trang
+// Map dữ liệu từ backend response về format frontend
+const mapAssetData = (items, pageNumber, pageSizeValue) => {
+  const startIndex = (pageNumber - 1) * pageSizeValue
+  return items.map((item, index) => ({
+    stt: startIndex + index + 1, // STT theo trang hiện tại
+    id: item.fixed_asset_id || item.id,
+    fixed_asset_id: item.fixed_asset_id || item.id,
+    assetCode: item.fixed_asset_code || item.fixedAssetCode || '',
+    assetName: item.fixed_asset_name || item.fixedAssetName || '',
+    assetTypeId: item.fixed_asset_category_id || item.fixedAssetCategoryId || '',
+    assetTypeName:
+      item.fixed_asset_category_name || item.assetCategoryName || item.assetTypeName || '',
+    departmentId: item.department_id || item.departmentId || '',
+    departmentName: item.department_name || item.departmentName || '',
+    quantity: item.quantity || 1,
+    cost: item.cost || 0,
+    depreciationRate: item.depreciation_rate || 0,
+    purchaseDate: item.purchase_date || '',
+    usedStartDate: item.used_start_date || '',
+    trackedYear: item.tracked_year || new Date().getFullYear(),
+    lifeTime: item.life_time || 0,
+    depreciationValueYear: item.depreciation_value_year || 0,
+    accumulatedDepreciation: item.accumulated_depreciation || 0,
+    remainingValue: (item.cost || 0) - (item.accumulated_depreciation || 0),
+    productionYear: item.tracked_year || new Date().getFullYear(),
   }))
-})
+}
 
 const loadData = async () => {
   try {
-    const response = await fixedAssetApi.getAll()
-    console.log('Dữ liệu từ backend:', response)
-    // Ánh xạ dữ liệu từ backend (FixedAssetDto) sang format frontend
-    assetData.value = response.map((item, index) => ({
-      stt: index + 1,
-      id: item.fixed_asset_id || item.id,
-      fixed_asset_id: item.fixed_asset_id || item.id,
-      assetCode: item.fixed_asset_code || item.fixedAssetCode || '',
-      assetName: item.fixed_asset_name || item.fixedAssetName || '',
-      assetTypeId: item.fixed_asset_category_id || item.fixedAssetCategoryId || '',
-      assetTypeName:
-        item.fixed_asset_category_name || item.assetCategoryName || item.assetTypeName || '',
-      departmentId: item.department_id || item.departmentId || '',
-      departmentName: item.department_name || item.departmentName || '',
-      quantity: item.quantity || 1,
-      cost: item.cost || 0,
-      depreciationRate: item.depreciation_rate || 0,
-      purchaseDate: item.purchase_date || '',
-      usedStartDate: item.used_start_date || '',
-      trackedYear: item.tracked_year || new Date().getFullYear(),
-      lifeTime: item.life_time || 0,
-      depreciationValueYear: item.depreciation_value_year || 0,
-      accumulatedDepreciation: item.accumulated_depreciation || 0,
-      remainingValue: (item.cost || 0) - (item.accumulated_depreciation || 0),
-      productionYear: item.tracked_year || new Date().getFullYear(),
-    }))
-    totalRecords.value = assetData.value.length
+    const pageSizeValue = parseInt(pageSize.value) || 20
+    // Call filter API với paging và filters
+    const response = await fixedAssetApi.getByFilter(
+      currentPage.value,
+      pageSizeValue,
+      searchText.value,
+      selectedDepartment.value,
+      selectedAssetType.value,
+    )
+    console.log('Response từ API (đã qua interceptor):', response)
+
+    // Axios interceptor trả về response.data trực tiếp
+    // Backend response: { totalRecords: 55, data: [...] }
+    // Nên response ở đây chính là { totalRecords: 55, data: [...] }
+    let totalRecordsValue = response?.totalRecords || response?.TotalRecords || 0
+    let dataArray = response?.data || response?.Data || []
+
+    console.log(
+      'Extracted: totalRecordsValue =',
+      totalRecordsValue,
+      'dataArray.length =',
+      dataArray.length,
+    )
+
+    assetData.value = mapAssetData(dataArray, currentPage.value, pageSizeValue)
+    totalRecords.value = totalRecordsValue
+
+    console.log(`Trang ${currentPage.value}: ${dataArray.length} items, Tổng: ${totalRecordsValue}`)
   } catch (error) {
     console.error('Lỗi khi lấy dữ liệu:', error)
-    if (error.response) {
-      alert(
-        `Lỗi ${error.response.status}: ${error.response.data?.message || 'Không thể lấy dữ liệu'}`,
-      )
-    } else if (error.request) {
-      alert('Không thể kết nối với máy chủ. Vui lòng kiểm tra backend đã chạy chưa.')
-    } else {
-      alert('Đã xảy ra lỗi: ' + error.message)
-    }
+    assetData.value = []
+    totalRecords.value = 0
   }
 }
 
@@ -360,9 +382,23 @@ onMounted(() => {
   loadData() // Lấy danh sách tài sản
 })
 
+// Watch để reload dữ liệu khi filters hoặc paging thay đổi
+const debouncedLoadData = debounce(() => {
+  currentPage.value = 1 // Reset về trang 1 khi tìm kiếm/filter
+  loadData()
+}, 500)
+
+watch([searchText, selectedAssetType, selectedDepartment], () => {
+  debouncedLoadData()
+})
+
+watch([currentPage, pageSize], () => {
+  loadData()
+})
+
 // --- Computed Totals ---
 const totals = computed(() => {
-  return paginatedAssetData.value.reduce(
+  return assetData.value.reduce(
     (acc, item) => {
       acc.quantity += item.quantity || 0
       acc.cost += item.cost || 0

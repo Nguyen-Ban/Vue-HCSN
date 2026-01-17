@@ -93,12 +93,11 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import MsDialog from '@/components/MsDialog.vue'
-import MsInput from '@/components/MsInput.vue'
-import MsCombobox from '@/components/MsCombobox.vue'
-import MsButton from '@/components/MsButton.vue'
-import fixedAssetApi from '@/apis/fixedAssetApi'
-
+import MsDialog from '../../components/MSDialog.vue'
+import MsInput from '../../components/MSInput.vue'
+import MsCombobox from '../../components/MSCombobox.vue'
+import MsButton from '../../components/MSButton.vue'
+import fixedAssetApi from '../../apis/fixedAssetApi'
 const props = defineProps({
   modelValue: Boolean,
   mode: { type: String, default: 'add' }, // 'add' hoặc 'edit'
