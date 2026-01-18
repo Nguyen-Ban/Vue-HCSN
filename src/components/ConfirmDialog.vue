@@ -22,9 +22,25 @@
               </div>
             </template>
 
+            <template v-if="state.confirm.mode === 'cancel'">
+              <div class="right-group">
+                <MsButton type="outline" @click="handleCancel">Không</MsButton>
+                <MsButton type="primary" @click="handleConfirm">Hủy bỏ</MsButton>
+              </div>
+            </template>
+
+            <template v-if="state.confirm.mode === 'duplicate'">
+              <div class="right-group">
+                <MsButton type="outline" @click="handleCancel">Không</MsButton>
+                <MsButton type="primary" @click="handleConfirm">Lưu</MsButton>
+              </div>
+            </template>
+
             <template v-else>
-              <MsButton type="outline" @click="handleCancel">Không</MsButton>
-              <MsButton type="primary" @click="handleConfirm">Xóa</MsButton>
+              <div class="right-group">
+                <MsButton type="outline" @click="handleCancel">Không</MsButton>
+                <MsButton type="primary" @click="handleConfirm">Xóa</MsButton>
+              </div>
             </template>
           </div>
         </div>
@@ -59,12 +75,11 @@ const handleCancel = () => {
   closeConfirm()
 }
 
-// Format text: In đậm số lượng (04) và mã tài sản <<...>>
+// Format text: In đậm số lượng (04) và mã tài sản
 const formattedText = computed(() => {
   let text = state.confirm.text || ''
-  text = text.replace(/</g, '&lt;').replace(/>/g, '&gt;') // Escape HTML
-  text = text.replace(/&lt;&lt;(.*?)&gt;&gt;/g, '<strong>&lt;&lt;$1&gt;&gt;</strong>') // Bold <<...>>
   text = text.replace(/\b(\d{2,})\b/g, '<strong>$1</strong>') // Bold số lượng (02, 10...)
+  text = text.replace(/([A-Z0-9]+\s*-\s*[^?]+)(\?)/g, '<strong>$1</strong>$2')
   return text
 })
 </script>
@@ -96,8 +111,6 @@ const formattedText = computed(() => {
   display: flex;
   align-items: flex-start;
   gap: 24px;
-  margin-bottom: 32px;
-  border-bottom: 1px solid #f0f0f0; /* Đường kẻ mờ ngăn cách footer */
   padding-bottom: 24px;
 }
 
@@ -115,17 +128,23 @@ const formattedText = computed(() => {
 
 .confirm-footer {
   display: flex;
-  justify-content: flex-end; /* Mặc định căn phải */
-  gap: 12px;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 24px;
 }
 
 /* Style riêng cho footer 3 nút */
 .ms-confirm-dialog .confirm-footer:has(.btn-left) {
-  justify-content: space-between; /* Hủy bỏ sang trái, 2 nút kia sang phải */
+  justify-content: space-between;
 }
 
 .right-group {
   display: flex;
-  gap: 12px;
+  gap: 8px;
+  width: 200px;
+}
+
+.right-group :deep(.ms-button) {
+  flex: 1;
 }
 </style>

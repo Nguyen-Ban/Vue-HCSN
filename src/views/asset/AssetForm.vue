@@ -98,7 +98,7 @@ import MsInput from '../../components/MsInput.vue'
 import MsCombobox from '../../components/MsCombobox.vue'
 import MsButton from '../../components/MsButton.vue'
 import fixedAssetApi from '../../apis/fixedAssetApi'
-import { showToast } from '../../stores/notification'
+import { showToast, showUnsavedChangeConfirm, showDeleteConfirm } from '../../stores/notification'
 const props = defineProps({
   modelValue: Boolean,
   mode: { type: String, default: 'add' }, // 'add' hoặc 'edit'
@@ -133,6 +133,9 @@ const form = ref({
 })
 
 const isLoading = ref(false)
+
+// Lưu dữ liệu gốc để so sánh sau này khi sửa
+const originalFormData = ref(null)
 
 // Chuẩn hoá ngày thành yyyy-MM-dd để input type="date" đọc được
 // Giữ nguyên cả các ngày rất nhỏ (ví dụ 0001-01-01) theo yêu cầu backend
@@ -284,6 +287,8 @@ watch(
         lifeTime: newData.life_time || 0,
         depreciationValueYear: newData.depreciation_value_year || 0,
       }
+      // Lưu bản sao dữ liệu gốc
+      originalFormData.value = JSON.parse(JSON.stringify(form.value))
     } else {
       resetForm()
       // Cho phép truyền sẵn mã tài sản mới vào form thêm
@@ -317,11 +322,79 @@ const resetForm = () => {
     lifeTime: 0,
     depreciationValueYear: 0,
   }
+  originalFormData.value = null
+}
+
+// Kiểm tra xem form có thay đổi so với dữ liệu gốc không
+const hasChanges = () => {
+  if (!originalFormData.value) return false
+  return JSON.stringify(form.value) !== JSON.stringify(originalFormData.value)
+}
+
+// Kiểm tra xem form thêm có dữ liệu nhập vào không
+const isFormEmpty = () => {
+  return (
+    !form.value.assetCode?.trim() &&
+    !form.value.assetName?.trim() &&
+    !form.value.departmentId &&
+    !form.value.assetTypeId &&
+    form.value.quantity === 1 &&
+    form.value.cost === 0 &&
+    form.value.depreciationRate === 0 &&
+    !form.value.lifeTime &&
+    !form.value.depreciationValueYear
+  )
+}
+
+// Đóng dialog mà không kiểm tra thay đổi
+const closeDialogDirectly = () => {
+  emit('update:modelValue', false)
+  resetForm()
 }
 
 const handleClose = () => {
-  emit('update:modelValue', false)
-  resetForm()
+  // Form sửa có thay đổi hoặc form thêm có dữ liệu → hỏi trước khi đóng
+  const shouldConfirm =
+    (props.mode === 'edit' && hasChanges()) || (props.mode === 'add' && !isFormEmpty())
+
+  if (shouldConfirm) {
+    // Form thêm: dùng cảnh báo xóa (2 button)
+    if (props.mode === 'add') {
+      showDeleteConfirm({
+        mode: 'cancel',
+        text: 'Bạn có muốn hủy bỏ khai báo tài sản này?',
+        onConfirm: () => {
+          // Hủy bỏ
+          emit('update:modelValue', false)
+          resetForm()
+        },
+        onCancel: () => {
+          // Không, quay lại form
+        },
+      })
+    } else {
+      // Form sửa: dùng cảnh báo thay đổi chưa lưu (3 button)
+      showUnsavedChangeConfirm({
+        text: 'Thông tin thay đổi sẽ không được cập nhật nếu bạn không lưu. Bạn có muốn lưu các thay đổi này?',
+        onConfirm: () => {
+          // Lưu rồi đóng
+          handleSave()
+        },
+        onDeny: () => {
+          // Không lưu, đóng dialog
+          emit('update:modelValue', false)
+          resetForm()
+        },
+        onCancel: () => {
+          // Quay lại form, không đóng dialog
+        },
+      })
+    }
+  } else {
+    // Form thêm rỗng hoặc form sửa không thay đổi, đóng ngay
+    emit('update:modelValue', false)
+    resetForm()
+  }
 }
 
 const handleSave = async () => {
@@ -371,7 +444,7 @@ const handleSave = async () => {
     }
 
     emit('save', form.value)
-    handleClose()
+    closeDialogDirectly()
   } catch (error) {
     console.error('Lỗi khi lưu tài sản:', error)
     const msg = error?.response?.data?.message || 'Không thể lưu tài sản. Vui lòng thử lại!'

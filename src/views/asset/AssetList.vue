@@ -190,7 +190,6 @@ import MsInput from '../../components/MsInput.vue'
 import MsCombobox from '../../components/MsCombobox.vue'
 import MsTable from '../../components/MsTable.vue'
 import AssetForm from './AssetForm.vue'
-import ConfirmDialog from '../../components/ConfirmDialog.vue'
 import { showDeleteConfirm, showToast } from '../../stores/notification'
 
 // Debounce helper
@@ -505,8 +504,9 @@ const duplicateAsset = (row) => {
 
   const codeName = `${row.assetCode} - ${row.assetName}`
   showDeleteConfirm({
+    mode: 'duplicate',
     title: 'Nhân bản tài sản',
-    text: `Bạn có muốn nhân bản tài sản «${codeName}» ?`,
+    text: `Bạn có muốn nhân bản tài sản ${codeName}?`,
     onConfirm: async () => {
       try {
         const res = await fixedAssetApi.duplicate(assetId)
@@ -540,14 +540,15 @@ const confirmDeleteSelected = () => {
     const row = assetData.value.find((r) => r.id === id)
     const codeName = row ? `${row.assetCode} - ${row.assetName}` : id
     showDeleteConfirm({
-    text: `Bạn có muốn xóa tài sản <<${codeName}>>?`,
-    onConfirm: async () => {
-       // Logic xóa gọi API tại đây
-       await fixedAssetApi.delete(id);
-       showToast({ message: 'Xóa thành công', type: 'success' });
-       await loadData();
-    },
-  })
+      text: `Bạn có muốn xóa tài sản ${codeName}?`,
+      onConfirm: async () => {
+        // Logic xóa gọi API tại đây
+        await fixedAssetApi.delete(id)
+        showToast({ message: 'Xóa thành công', type: 'success' })
+        selectedAssetIds.value = []
+        await loadData()
+      },
+    })
   } else {
     const countText = String(count).padStart(2, '0')
     showDeleteConfirm({

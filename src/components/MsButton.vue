@@ -1,17 +1,20 @@
 <template>
-  <button :class="[
-    'ms-button',
-    `ms-button--${type}`
-  ]">
-    <div v-if="icon && positionIcon === 'left'" class="ms-button__icon ms-button__icon--left" :class="icon">
-    </div>
+  <button :class="['ms-button', `ms-button--${type}`]">
+    <div
+      v-if="icon && positionIcon === 'left'"
+      class="ms-button__icon ms-button__icon--left"
+      :class="icon"
+    ></div>
 
     <span class="ms-button__content">
       <slot></slot>
     </span>
 
-    <div v-if="icon && positionIcon === 'right'" class="ms-button__icon ms-button__icon--right" :class="icon">
-    </div>
+    <div
+      v-if="icon && positionIcon === 'right'"
+      class="ms-button__icon ms-button__icon--right"
+      :class="icon"
+    ></div>
   </button>
 </template>
 
@@ -25,12 +28,12 @@ defineProps({
   positionIcon: {
     type: String,
     default: 'left',
-    validator: (value) => ['left', 'right'].includes(value)
+    validator: (value) => ['left', 'right'].includes(value),
   },
   type: {
     type: String,
-    default: 'primary'
-  }
+    default: 'primary',
+  },
 })
 //#endregion
 </script>
@@ -39,13 +42,14 @@ defineProps({
 .ms-button {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   padding: 8px 16px;
   border: none;
   cursor: pointer;
   font-size: 13px;
   transition: all 0.3s ease;
   border-radius: 3px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, .16);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.16);
   height: 36px;
   overflow: hidden;
 }
@@ -99,8 +103,6 @@ defineProps({
   margin-left: 8px;
 }
 </style>
-
-
 
 <!-- <style lang="scss" scoped>
 .ms-button {

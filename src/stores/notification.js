@@ -29,10 +29,10 @@ export function showToast({ message, type = 'success', duration = 3000 }) {
 }
 
 // Hàm cho trường hợp Xóa (2 nút)
-export function showDeleteConfirm({ title, text, onConfirm, onCancel }) {
+export function showDeleteConfirm({ mode, title, text, onConfirm, onCancel }) {
   state.confirm = {
     visible: true,
-    mode: 'delete',
+    mode: mode || 'delete',
     title: title || 'Thông báo',
     text: text,
     onConfirm: onConfirm || (() => {}),
