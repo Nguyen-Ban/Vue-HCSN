@@ -206,6 +206,24 @@ td {
   border-bottom: 1px solid #e0e0e0;
   box-sizing: border-box;
 }
+
+/* Truncate overflowing text with ellipsis while keeping full content in DOM */
+:deep(td):not(.ms-td-action):not(.ms-td-checkbox) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:deep(td):not(.ms-td-action):not(.ms-td-checkbox) > * {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:deep(td):not(.ms-td-action):not(.ms-td-checkbox) > * > * {
+  display: inline;
+}
 tr:hover {
   background-color: #f2f9ff; /* Hover màu xanh nhạt theo style MISA */
 }

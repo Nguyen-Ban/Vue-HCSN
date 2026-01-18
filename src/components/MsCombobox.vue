@@ -13,7 +13,7 @@
         :value="searchText"
         :placeholder="placeholder || 'Chọn giá trị'"
         @input="onSearch"
-        @focus="onFocus"
+        @click="toggleDropdown"
         @keydown.escape="isOpen = false"
       />
 
@@ -112,15 +112,19 @@ const filteredOptions = computed(() => {
  */
 const onSearch = (e) => {
   searchText.value = e.target.value
-  isOpen.value = true
+  if (!isOpen.value) {
+    isOpen.value = true
+  }
 }
 
 /**
- * 🎯 Focus
+ * 🔄 Toggle dropdown
  */
-const onFocus = () => {
-  isOpen.value = true
-  searchText.value = ''
+const toggleDropdown = () => {
+  isOpen.value = !isOpen.value
+  if (isOpen.value) {
+    searchText.value = ''
+  }
 }
 
 /**
@@ -187,7 +191,7 @@ onUnmounted(() => document.removeEventListener('click', closeDropdown))
 .ms-select {
   width: 100%;
   height: 36px;
-  border-radius: 2.5px;
+  border-radius: 3px;
   border: 1px solid #afafaf;
   padding: 0 12px;
   padding-right: 30px;
@@ -237,7 +241,7 @@ onUnmounted(() => document.removeEventListener('click', closeDropdown))
   max-height: 300px;
   background: #fff;
   border: 1px solid #ccc;
-  border-radius: 2.5px;
+  border-radius: 3px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   z-index: 1000;
   overflow: hidden;
@@ -246,19 +250,25 @@ onUnmounted(() => document.removeEventListener('click', closeDropdown))
 }
 .ms-dropdown-header {
   display: flex;
-  background: #0066cc;
-  color: #fff;
+  background: #82beff;
+  color: black;
   font-weight: 600;
   font-size: 13px;
-  padding: 8px;
-  border-bottom: 1px solid #ccc;
+  padding: 8px 12px;
+  margin: 2px 4px;
+  border-radius: 3px;
+  border-bottom: none;
+  align-items: center;
+  gap: 12px;
 }
 .ms-dropdown-header .ms-dropdown-col:first-child {
-  width: 80px;
+  width: 40px;
   flex-shrink: 0;
+  text-align: center;
 }
 .ms-dropdown-header .ms-dropdown-col:last-child {
   flex: 1;
+  text-align: left;
 }
 .ms-dropdown-body {
   overflow-y: auto;
@@ -266,10 +276,14 @@ onUnmounted(() => document.removeEventListener('click', closeDropdown))
 }
 .ms-dropdown-item {
   display: flex;
-  padding: 8px;
+  padding: 8px 12px;
   cursor: pointer;
   font-size: 13px;
   border-bottom: 1px solid #f0f0f0;
+  margin: 0 4px;
+  border-radius: 3px;
+  align-items: center;
+  gap: 12px;
 }
 .ms-dropdown-item:hover {
   background: #e6f2ff;
@@ -278,10 +292,25 @@ onUnmounted(() => document.removeEventListener('click', closeDropdown))
   background: #cce5ff;
 }
 .ms-dropdown-item .ms-dropdown-col:first-child {
-  width: 80px;
+  width: 40px;
   flex-shrink: 0;
   font-weight: 500;
+  text-align: center;
 }
+.ms-dropdown-item .ms-dropdown-col:last-child {
+  flex: 1;
+  color: #333;
+  text-align: left;
+}
+
+/* Truncate long text with ellipsis but keep full content in DOM */
+.ms-dropdown-col {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .ms-dropdown-item .ms-dropdown-col:last-child {
   flex: 1;
   color: #333;
