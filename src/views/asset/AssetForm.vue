@@ -460,7 +460,7 @@ const handleSave = async () => {
   display: grid;
   /* Chia grid thành 11 phần bằng nhau */
   grid-template-columns: repeat(11, 1fr);
-  gap: 12px 20px; /* Khoảng cách giữa các ô */
+  gap: 20px 20px; /* Khoảng cách giữa các ô */
 }
 
 .form-group {

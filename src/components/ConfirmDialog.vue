@@ -22,14 +22,14 @@
               </div>
             </template>
 
-            <template v-if="state.confirm.mode === 'cancel'">
+            <template v-else-if="state.confirm.mode === 'cancel'">
               <div class="right-group">
                 <MsButton type="outline" @click="handleCancel">Không</MsButton>
                 <MsButton type="primary" @click="handleConfirm">Hủy bỏ</MsButton>
               </div>
             </template>
 
-            <template v-if="state.confirm.mode === 'duplicate'">
+            <template v-else-if="state.confirm.mode === 'duplicate'">
               <div class="right-group">
                 <MsButton type="outline" @click="handleCancel">Không</MsButton>
                 <MsButton type="primary" @click="handleConfirm">Lưu</MsButton>

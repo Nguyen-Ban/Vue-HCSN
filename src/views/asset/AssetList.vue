@@ -52,7 +52,12 @@
       </div>
     </div>
 
-    <MsTable :columns="tableColumns" :data="assetData" v-model:selected="selectedAssetIds">
+    <MsTable
+      :columns="tableColumns"
+      :data="assetData"
+      v-model:selected="selectedAssetIds"
+      @row-contextmenu="onRowContextMenu"
+    >
       <template #cost="{ value }">
         <div style="text-align: right">{{ formatMoney(value) }}</div>
       </template>
@@ -170,6 +175,31 @@
       </template>
     </MsTable>
 
+    <!-- Context Menu for row actions -->
+    <div v-if="rowMenu.visible" class="context-menu-mask" @click="hideRowMenu"></div>
+    <div
+      v-if="rowMenu.visible"
+      class="context-menu"
+      :style="{ top: rowMenu.y + 'px', left: rowMenu.x + 'px' }"
+    >
+      <div class="menu-item" @click="handleMenuAdd">
+        <span class="icon icon-plus"></span>
+        <span>Thêm</span>
+      </div>
+      <div class="menu-item" @click="handleMenuEdit">
+        <span class="icon icon-pencil"></span>
+        <span>Sửa</span>
+      </div>
+      <div class="menu-item" @click="handleMenuDelete">
+        <span class="icon icon-trash"></span>
+        <span>Xóa</span>
+      </div>
+      <div class="menu-item" @click="handleMenuDuplicate">
+        <span class="icon icon-clone"></span>
+        <span>Nhân bản</span>
+      </div>
+    </div>
+
     <!-- Asset Form Dialog -->
     <AssetForm
       v-model="showDialog"
@@ -286,6 +316,27 @@ const tableColumns = [
 // --- Mock Data Rows ---
 const assetData = ref([])
 const selectedAssetIds = ref([])
+
+// --- Row Context Menu State ---
+const rowMenu = ref({ visible: false, x: 0, y: 0, row: null })
+
+const onRowContextMenu = ({ x, y, row }) => {
+  // Adjust if menu would overflow the viewport (basic guard)
+  const padding = 8
+  const menuWidth = 180
+  const menuHeight = 160
+  const vw = window.innerWidth
+  const vh = window.innerHeight
+  let nx = x
+  let ny = y
+  if (nx + menuWidth + padding > vw) nx = vw - menuWidth - padding
+  if (ny + menuHeight + padding > vh) ny = vh - menuHeight - padding
+  rowMenu.value = { visible: true, x: nx, y: ny, row }
+}
+
+const hideRowMenu = () => {
+  rowMenu.value.visible = false
+}
 
 // Map dữ liệu từ backend response về format frontend
 const mapAssetData = (items, pageNumber, pageSizeValue) => {
@@ -521,6 +572,48 @@ const duplicateAsset = (row) => {
   })
 }
 
+// --- Context Menu Actions ---
+const handleMenuAdd = () => {
+  hideRowMenu()
+  openAddModal()
+}
+
+const handleMenuEdit = () => {
+  const row = rowMenu.value.row
+  if (!row) return hideRowMenu()
+  hideRowMenu()
+  editAsset(row)
+}
+
+const handleMenuDelete = () => {
+  const row = rowMenu.value.row
+  if (!row) return hideRowMenu()
+  const id = row.id || row.fixed_asset_id
+  const codeName = `${row.assetCode} - ${row.assetName}`
+  hideRowMenu()
+  showDeleteConfirm({
+    text: `Bạn có muốn xóa tài sản ${codeName}?`,
+    onConfirm: async () => {
+      try {
+        await fixedAssetApi.delete(id)
+        showToast({ message: 'Xóa thành công', type: 'success' })
+        selectedAssetIds.value = selectedAssetIds.value.filter((sid) => sid !== id)
+        await loadData()
+      } catch (err) {
+        console.error(err)
+        showToast({ message: 'Không xóa được bản ghi.', type: 'error' })
+      }
+    },
+  })
+}
+
+const handleMenuDuplicate = () => {
+  const row = rowMenu.value.row
+  if (!row) return hideRowMenu()
+  hideRowMenu()
+  duplicateAsset(row)
+}
+
 const goToPage = (page) => {
   if (!pageSize.value) return
   const bounded = Math.min(Math.max(1, page), totalPages.value)
@@ -739,5 +832,37 @@ const confirmDeleteSelected = () => {
   outline: none;
   border-color: #40a9ff;
   box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+}
+
+/* --- Row Context Menu Styles --- */
+.context-menu-mask {
+  position: fixed;
+  inset: 0;
+  background: transparent;
+  z-index: 1000;
+}
+
+.context-menu {
+  position: fixed;
+  z-index: 1001;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  min-width: 180px;
+  padding: 6px 0;
+}
+
+.context-menu .menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  color: #1f1f1f;
+}
+
+.context-menu .menu-item:hover {
+  background: #f5f5f5;
 }
 </style>

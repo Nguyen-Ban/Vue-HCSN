@@ -26,7 +26,11 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(row, index) in data" :key="row.id || index">
+          <tr
+            v-for="(row, index) in data"
+            :key="row.id || index"
+            @contextmenu.prevent="onRowContextMenu($event, row)"
+          >
             <td class="ms-td-checkbox">
               <input type="checkbox" v-model="selectedRows" :value="row.id" />
             </td>
@@ -75,7 +79,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:selected'])
+const emit = defineEmits(['update:selected', 'row-contextmenu'])
 
 const selectedRows = ref([]) // Chứa ID các dòng được chọn
 const bodyScroll = ref(null)
@@ -158,6 +162,11 @@ const syncFooterScroll = () => {
 onMounted(() => {
   nextTick(syncFooterScroll)
 })
+
+// Phát sự kiện contextmenu khi người dùng chuột phải vào một dòng
+const onRowContextMenu = (e, row) => {
+  emit('row-contextmenu', { x: e.clientX, y: e.clientY, row })
+}
 </script>
 
 <style scoped>
@@ -209,6 +218,22 @@ tr:hover {
   display: flex;
   justify-content: center;
   gap: 8px;
+}
+
+/* Cố định cột chức năng ở phía phải khi cuộn ngang */
+th.sticky-col-right {
+  position: sticky;
+  right: 0;
+  z-index: 12; /* cao hơn các th khác */
+  background-color: #f5f5f5;
+  box-shadow: -4px 0 6px rgba(0, 0, 0, 0.06); /* viền mờ bên trái */
+}
+td.sticky-col-right {
+  position: sticky;
+  right: 0;
+  z-index: 3; /* cao hơn các ô thường */
+  background-color: #fff;
+  box-shadow: -4px 0 6px rgba(0, 0, 0, 0.04);
 }
 
 .ms-table-footer {
