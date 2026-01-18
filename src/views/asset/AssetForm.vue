@@ -98,6 +98,7 @@ import MsInput from '../../components/MsInput.vue'
 import MsCombobox from '../../components/MsCombobox.vue'
 import MsButton from '../../components/MsButton.vue'
 import fixedAssetApi from '../../apis/fixedAssetApi'
+import { showToast } from '../../stores/notification'
 const props = defineProps({
   modelValue: Boolean,
   mode: { type: String, default: 'add' }, // 'add' hoặc 'edit'
@@ -285,6 +286,10 @@ watch(
       }
     } else {
       resetForm()
+      // Cho phép truyền sẵn mã tài sản mới vào form thêm
+      if (newData?.assetCode) {
+        form.value.assetCode = newData.assetCode
+      }
     }
   },
   { deep: true },
@@ -325,11 +330,11 @@ const handleSave = async () => {
 
     // Validate dữ liệu cơ bản
     if (!form.value.assetCode?.trim()) {
-      alert('Vui lòng nhập mã tài sản')
+      showToast({ message: 'Vui lòng nhập mã tài sản', type: 'warning' })
       return
     }
     if (!form.value.assetName?.trim()) {
-      alert('Vui lòng nhập tên tài sản')
+      showToast({ message: 'Vui lòng nhập tên tài sản', type: 'warning' })
       return
     }
 
@@ -352,28 +357,25 @@ const handleSave = async () => {
 
     if (props.mode === 'add') {
       await fixedAssetApi.create(formData)
-      alert('Thêm tài sản thành công!')
+      showToast({ message: 'Lưu dữ liệu thành công', type: 'success' })
     } else {
       // Cập nhật tài sản - sử dụng ID đã map vào form
       const assetId = form.value.fixed_asset_id || form.value.id
       if (!assetId) {
-        alert('Không tìm thấy ID tài sản')
+        showToast({ message: 'Không tìm thấy ID tài sản', type: 'error' })
         isLoading.value = false
         return
       }
       await fixedAssetApi.update(assetId, formData)
-      alert('Cập nhật tài sản thành công!')
+      showToast({ message: 'Lưu dữ liệu thành công', type: 'success' })
     }
 
     emit('save', form.value)
     handleClose()
   } catch (error) {
     console.error('Lỗi khi lưu tài sản:', error)
-    if (error.response?.data?.message) {
-      alert(`Lỗi: ${error.response.data.message}`)
-    } else {
-      alert('Không thể lưu tài sản. Vui lòng thử lại!')
-    }
+    const msg = error?.response?.data?.message || 'Không thể lưu tài sản. Vui lòng thử lại!'
+    showToast({ message: msg, type: 'error' })
   } finally {
     isLoading.value = false
   }

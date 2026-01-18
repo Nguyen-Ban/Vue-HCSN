@@ -25,6 +25,18 @@ const fixedAssetApi = {
     return axiosClient.get(url)
   },
 
+  // Sinh mã tài sản mới
+  getNewCode() {
+    const url = '/FixedAssets/newCode'
+    return axiosClient.get(url)
+  },
+
+  // Nhân bản tài sản
+  duplicate(id) {
+    const url = `/FixedAssets/duplicate/${id}`
+    return axiosClient.post(url)
+  },
+
   // Xóa tài sản theo ID
   delete(id) {
     const url = `/FixedAssets/${id}`

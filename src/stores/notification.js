@@ -4,10 +4,12 @@ const state = reactive({
   toasts: [],
   confirm: {
     visible: false,
+    model: 'delete', // 'delete' (2 nút) hoặc 'unsaved' (3 nút)
     title: '',
     text: '',
-    onConfirm: null,
-    onCancel: null,
+    onConfirm: null, // Nút "Xóa" hoặc "Lưu"
+    onDeny: null,    // Nút "Không lưu" (cho trường hợp 3 nút)
+    onCancel: null,  // Nút "Không" hoặc "Hủy bỏ"
   },
 })
 
@@ -26,13 +28,29 @@ export function showToast({ message, type = 'success', duration = 3000 }) {
   }
 }
 
-export function showConfirm({ title, text, onConfirm, onCancel }) {
+// Hàm cho trường hợp Xóa (2 nút)
+export function showDeleteConfirm({ title, text, onConfirm, onCancel }) {
   state.confirm = {
     visible: true,
-    title,
-    text,
+    mode: 'delete',
+    title: title || 'Thông báo',
+    text: text,
     onConfirm: onConfirm || (() => {}),
     onCancel: onCancel || (() => {}),
+    onDeny: null
+  }
+}
+
+// Hàm cho trường hợp Dữ liệu thay đổi (3 nút)
+export function showUnsavedChangeConfirm({ title, text, onConfirm, onDeny, onCancel }) {
+  state.confirm = {
+    visible: true,
+    mode: 'unsaved',
+    title: title || 'Dữ liệu chưa được lưu',
+    text: text || 'Thông tin thay đổi sẽ không được cập nhật nếu bạn không lưu. Bạn có muốn lưu các thay đổi này?',
+    onConfirm: onConfirm || (() => {}),
+    onDeny: onDeny || (() => {}),
+    onCancel: onCancel || (() => {})
   }
 }
 

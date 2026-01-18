@@ -190,7 +190,8 @@ import MsInput from '../../components/MsInput.vue'
 import MsCombobox from '../../components/MsCombobox.vue'
 import MsTable from '../../components/MsTable.vue'
 import AssetForm from './AssetForm.vue'
-import { showConfirm, showToast } from '../../stores/notification'
+import ConfirmDialog from '../../components/ConfirmDialog.vue'
+import { showDeleteConfirm, showToast } from '../../stores/notification'
 
 // Debounce helper
 function debounce(func, wait) {
@@ -430,26 +431,35 @@ const formatMoney = (value) => {
   return new Intl.NumberFormat('vi-VN').format(value)
 }
 
-const openAddModal = () => {
+const openAddModal = async () => {
   dialogMode.value = 'add'
-  formData.value = {
-    assetCode: '',
-    assetName: '',
-    assetTypeId: '',
-    assetTypeName: '',
-    departmentId: '',
-    departmentName: '',
-    quantity: 1,
-    cost: 0,
-    depreciationRate: 0,
-    purchaseDate: '',
-    usedStartDate: '',
-    trackedYear: new Date().getFullYear(),
-    productionYear: 0,
-    lifeTime: 0,
-    depreciationValueYear: 0,
+  let newCode = ''
+
+  try {
+    newCode = await fixedAssetApi.getNewCode()
+  } catch (error) {
+    console.error('Lỗi sinh mã tài sản mới:', error)
+    showToast({ message: 'Không sinh được mã tài sản mới.', type: 'error' })
+  } finally {
+    formData.value = {
+      assetCode: newCode || '',
+      assetName: '',
+      assetTypeId: '',
+      assetTypeName: '',
+      departmentId: '',
+      departmentName: '',
+      quantity: 1,
+      cost: 0,
+      depreciationRate: 0,
+      purchaseDate: '',
+      usedStartDate: '',
+      trackedYear: new Date().getFullYear(),
+      productionYear: 0,
+      lifeTime: 0,
+      depreciationValueYear: 0,
+    }
+    showDialog.value = true
   }
-  showDialog.value = true
 }
 
 const editAsset = async (row) => {
@@ -487,7 +497,28 @@ const saveAsset = () => {
 }
 
 const duplicateAsset = (row) => {
-  console.log('Nhân bản', row)
+  const assetId = row.id || row.fixed_asset_id
+  if (!assetId) {
+    showToast({ message: 'Không tìm thấy ID tài sản', type: 'error' })
+    return
+  }
+
+  const codeName = `${row.assetCode} - ${row.assetName}`
+  showDeleteConfirm({
+    title: 'Nhân bản tài sản',
+    text: `Bạn có muốn nhân bản tài sản «${codeName}» ?`,
+    onConfirm: async () => {
+      try {
+        const res = await fixedAssetApi.duplicate(assetId)
+        showToast({ message: res?.message || 'Nhân bản thành công.', type: 'success' })
+        await loadData()
+      } catch (err) {
+        console.error(err)
+        const msg = err?.response?.data?.message || 'Nhân bản thất bại.'
+        showToast({ message: msg, type: 'error' })
+      }
+    },
+  })
 }
 
 const goToPage = (page) => {
@@ -508,24 +539,18 @@ const confirmDeleteSelected = () => {
     const id = selectedAssetIds.value[0]
     const row = assetData.value.find((r) => r.id === id)
     const codeName = row ? `${row.assetCode} - ${row.assetName}` : id
-    showConfirm({
-      title: 'Xóa tài sản',
-      text: `Bạn có muốn xóa tài sản «${codeName}» ?`,
-      onConfirm: async () => {
-        try {
-          const res = await fixedAssetApi.delete(id)
-          showToast({ message: res?.message || 'Xóa thành công.', type: 'success' })
-          selectedAssetIds.value = []
-          await loadData()
-        } catch (err) {
-          console.error(err)
-          showToast({ message: 'Xóa thất bại.', type: 'error' })
-        }
-      },
-    })
+    showDeleteConfirm({
+    text: `Bạn có muốn xóa tài sản <<${codeName}>>?`,
+    onConfirm: async () => {
+       // Logic xóa gọi API tại đây
+       await fixedAssetApi.delete(id);
+       showToast({ message: 'Xóa thành công', type: 'success' });
+       await loadData();
+    },
+  })
   } else {
     const countText = String(count).padStart(2, '0')
-    showConfirm({
+    showDeleteConfirm({
       title: 'Xóa nhiều tài sản',
       text: `${countText} tài sản đã được chọn. Bạn có muốn xóa các tài sản này khỏi danh sách?`,
       onConfirm: async () => {

@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import TestComponent from '@/components/TestComponent.vue'
+import ToastContainer from '@/components/ToastContainer.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,7 +27,7 @@ const router = createRouter({
     {
       path: '/tools',
       name: 'tools',
-      component: TestComponent,
+      component: ToastContainer,
     },
     {
       path: '/category',
