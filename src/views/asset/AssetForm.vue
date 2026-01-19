@@ -55,7 +55,13 @@
       </div>
       <div class="form-group col-4">
         <label>Nguyên giá <span class="required">*</span></label>
-        <MsInput v-model.number="form.cost" type="number" />
+        <MsInput
+          v-model="formattedCost"
+          type="text"
+          class="text-right"
+          @input="handleCostInput"
+          @keypress="allowOnlyNumbers"
+        />
         <span class="error-message">{{ errors.cost }}</span>
       </div>
       <div class="form-group col-4">
@@ -95,12 +101,18 @@
 
       <div class="form-group col-3">
         <label>Số năm sử dụng <span class="required">*</span></label>
-        <MsInput v-model.number="form.lifeTime" type="number" icon="icon icon-caret-up-down"/>
+        <MsInput v-model.number="form.lifeTime" type="number" icon="icon icon-caret-up-down" />
         <span class="error-message">{{ errors.lifeTime }}</span>
       </div>
       <div class="form-group col-4">
         <label>Giá trị hao mòn năm <span class="required">*</span></label>
-        <MsInput v-model.number="form.depreciationValueYear" type="number" />
+        <MsInput
+          v-model="formattedDepreciationValueYear"
+          type="text"
+          class="text-right"
+          @input="handleDepreciationValueYearInput"
+          @keypress="allowOnlyNumbers"
+        />
         <span class="error-message">{{ errors.depreciationValueYear }}</span>
       </div>
     </div>
@@ -176,6 +188,59 @@ const errors = ref({
 })
 
 const isLoading = ref(false)
+
+// Chỉ cho phép nhập số
+const allowOnlyNumbers = (event) => {
+  const charCode = event.which ? event.which : event.keyCode
+  // Chỉ cho phép số (0-9)
+  if (charCode < 48 || charCode > 57) {
+    event.preventDefault()
+  }
+}
+
+// Format số với dấu chấm phân cách hàng nghìn
+const formatNumber = (value) => {
+  if (!value && value !== 0) return ''
+  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+}
+
+// Parse số từ string có dấu chấm
+const parseFormattedNumber = (value) => {
+  if (!value) return 0
+  return parseInt(value.replace(/\./g, '')) || 0
+}
+
+// Computed cho nguyên giá được format
+const formattedCost = computed({
+  get: () => formatNumber(form.value.cost),
+  set: (value) => {
+    form.value.cost = parseFormattedNumber(value)
+  },
+})
+
+// Handler cho input nguyên giá
+const handleCostInput = (event) => {
+  const input = event.target.value
+  // Chỉ cho phép số và dấu chấm
+  const cleaned = input.replace(/[^0-9]/g, '')
+  form.value.cost = parseInt(cleaned) || 0
+}
+
+// Computed cho giá trị hao mòn năm được format
+const formattedDepreciationValueYear = computed({
+  get: () => formatNumber(form.value.depreciationValueYear),
+  set: (value) => {
+    form.value.depreciationValueYear = parseFormattedNumber(value)
+  },
+})
+
+// Handler cho input giá trị hao mòn năm
+const handleDepreciationValueYearInput = (event) => {
+  const input = event.target.value
+  // Chỉ cho phép số
+  const cleaned = input.replace(/[^0-9]/g, '')
+  form.value.depreciationValueYear = parseInt(cleaned) || 0
+}
 
 // Lưu dữ liệu gốc để so sánh sau này khi sửa
 const originalFormData = ref(null)
@@ -630,6 +695,10 @@ const handleSave = async () => {
 
 :deep(.ms-input:disabled) {
   background-color: #f5f5f5 !important;
+}
+
+:deep(.text-right .ms-input) {
+  text-align: right;
 }
 
 :deep(.ms-input-wrapper) {

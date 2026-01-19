@@ -263,7 +263,7 @@ th .col-resizer {
   z-index: 15;
 }
 td {
-  padding: 10px 0px;
+  padding: 5px 0px;
   border-bottom: 1px solid #e0e0e0;
   box-sizing: border-box;
 }
