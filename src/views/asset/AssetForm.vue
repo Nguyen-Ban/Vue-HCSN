@@ -4,10 +4,12 @@
       <div class="form-group col-3">
         <label>Mã tài sản <span class="required">*</span></label>
         <MsInput v-model="form.assetCode" placeholder="TS00001" />
+        <span class="error-message">{{ errors.assetCode }}</span>
       </div>
       <div class="form-group col-8">
         <label>Tên tài sản <span class="required">*</span></label>
         <MsInput v-model="form.assetName" placeholder="Nhập tên tài sản" />
+        <span class="error-message">{{ errors.assetName }}</span>
       </div>
 
       <div class="form-group col-3">
@@ -21,6 +23,7 @@
           displayMode="code"
           placeholder="Chọn mã bộ phận sử dụng"
         />
+        <span class="error-message">{{ errors.departmentId }}</span>
       </div>
       <div class="form-group col-8">
         <label>Tên bộ phận sử dụng</label>
@@ -38,6 +41,7 @@
           displayMode="code"
           placeholder="Chọn mã loại tài sản"
         />
+        <span class="error-message">{{ errors.assetTypeId }}</span>
       </div>
       <div class="form-group col-8">
         <label>Tên loại tài sản</label>
@@ -46,27 +50,43 @@
 
       <div class="form-group col-3">
         <label>Số lượng <span class="required">*</span></label>
-        <MsInput
-          v-model.number="form.quantity"
-          icon="icon icon-caret-up-down"
-          type="number" />
+        <MsInput v-model.number="form.quantity" icon="icon icon-caret-up-down" type="number" />
+        <span class="error-message">{{ errors.quantity }}</span>
       </div>
       <div class="form-group col-4">
         <label>Nguyên giá <span class="required">*</span></label>
         <MsInput v-model.number="form.cost" type="number" />
+        <span class="error-message">{{ errors.cost }}</span>
       </div>
       <div class="form-group col-4">
         <label>Tỷ lệ hao mòn (%) <span class="required">*</span></label>
         <MsInput v-model.number="form.depreciationRate" type="number" />
+        <span class="error-message">{{ errors.depreciationRate }}</span>
       </div>
 
       <div class="form-group col-3">
         <label>Ngày mua <span class="required">*</span></label>
-        <MsInput v-model="form.purchaseDate" type="date" />
+        <DatePicker
+          v-model:value="form.purchaseDate"
+          class="ms-date-picker"
+          :suffix-icon="calendarIcon"
+          :allow-clear="false"
+          format="DD/MM/YYYY"
+          value-format="YYYY-MM-DD"
+        />
+        <span class="error-message">{{ errors.purchaseDate }}</span>
       </div>
       <div class="form-group col-4">
         <label>Ngày bắt đầu sử dụng <span class="required">*</span></label>
-        <MsInput v-model="form.usedStartDate" type="date" />
+        <DatePicker
+          v-model:value="form.usedStartDate"
+          class="ms-date-picker"
+          :suffix-icon="calendarIcon"
+          :allow-clear="false"
+          format="DD/MM/YYYY"
+          value-format="YYYY-MM-DD"
+        />
+        <span class="error-message">{{ errors.usedStartDate }}</span>
       </div>
       <div class="form-group col-4">
         <label>Năm theo dõi</label>
@@ -75,11 +95,13 @@
 
       <div class="form-group col-3">
         <label>Số năm sử dụng <span class="required">*</span></label>
-        <MsInput v-model.number="form.lifeTime" type="number" />
+        <MsInput v-model.number="form.lifeTime" type="number" icon="icon icon-caret-up-down"/>
+        <span class="error-message">{{ errors.lifeTime }}</span>
       </div>
       <div class="form-group col-4">
         <label>Giá trị hao mòn năm <span class="required">*</span></label>
         <MsInput v-model.number="form.depreciationValueYear" type="number" />
+        <span class="error-message">{{ errors.depreciationValueYear }}</span>
       </div>
     </div>
 
@@ -95,13 +117,15 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, h } from 'vue'
+import { DatePicker } from 'ant-design-vue'
 import MsDialog from '../../components/MsDialog.vue'
 import MsInput from '../../components/MsInput.vue'
 import MsCombobox from '../../components/MsCombobox.vue'
 import MsButton from '../../components/MsButton.vue'
 import fixedAssetApi from '../../apis/fixedAssetApi'
 import { showToast, showUnsavedChangeConfirm, showDeleteConfirm } from '../../stores/notification'
+
 const props = defineProps({
   modelValue: Boolean,
   mode: { type: String, default: 'add' }, // 'add' hoặc 'edit'
@@ -111,6 +135,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:modelValue', 'save'])
+
+const calendarIcon = h('span', { class: 'icon icon-date-picker' })
 
 const isOpen = computed({
   get: () => props.modelValue,
@@ -133,6 +159,20 @@ const form = ref({
   productionYear: 0,
   lifeTime: 0,
   depreciationValueYear: 0,
+})
+
+const errors = ref({
+  assetCode: '',
+  assetName: '',
+  departmentId: '',
+  assetTypeId: '',
+  quantity: '',
+  cost: '',
+  depreciationRate: '',
+  purchaseDate: '',
+  usedStartDate: '',
+  lifeTime: '',
+  depreciationValueYear: '',
 })
 
 const isLoading = ref(false)
@@ -325,7 +365,95 @@ const resetForm = () => {
     lifeTime: 0,
     depreciationValueYear: 0,
   }
+  errors.value = {
+    assetCode: '',
+    assetName: '',
+    departmentId: '',
+    assetTypeId: '',
+    quantity: '',
+    cost: '',
+    depreciationRate: '',
+    purchaseDate: '',
+    usedStartDate: '',
+    lifeTime: '',
+    depreciationValueYear: '',
+  }
   originalFormData.value = null
+}
+
+const validateForm = () => {
+  let isValid = true
+  const newErrors = {
+    assetCode: '',
+    assetName: '',
+    departmentId: '',
+    assetTypeId: '',
+    quantity: '',
+    cost: '',
+    depreciationRate: '',
+    purchaseDate: '',
+    usedStartDate: '',
+    lifeTime: '',
+    depreciationValueYear: '',
+  }
+
+  if (!form.value.assetCode?.trim()) {
+    newErrors.assetCode = 'Mã tài sản không được để trống'
+    isValid = false
+  }
+
+  if (!form.value.assetName?.trim()) {
+    newErrors.assetName = 'Tên tài sản không được để trống'
+    isValid = false
+  }
+
+  if (!form.value.departmentId) {
+    newErrors.departmentId = 'Bộ phận sử dụng không được để trống'
+    isValid = false
+  }
+
+  if (!form.value.assetTypeId) {
+    newErrors.assetTypeId = 'Loại tài sản không được để trống'
+    isValid = false
+  }
+
+  if (!form.value.quantity || form.value.quantity <= 0) {
+    newErrors.quantity = 'Số lượng phải lớn hơn 0'
+    isValid = false
+  }
+
+  if (form.value.cost < 0) {
+    newErrors.cost = 'Nguyên giá không được âm'
+    isValid = false
+  }
+
+  if (form.value.depreciationRate < 0 || form.value.depreciationRate > 100) {
+    newErrors.depreciationRate = 'Tỷ lệ hao mòn phải từ 0-100%'
+    isValid = false
+  }
+
+  if (!form.value.purchaseDate) {
+    newErrors.purchaseDate = 'Ngày mua không được để trống'
+    isValid = false
+  }
+
+  if (!form.value.usedStartDate) {
+    newErrors.usedStartDate = 'Ngày bắt đầu sử dụng không được để trống'
+    isValid = false
+  }
+
+  if (!form.value.lifeTime || form.value.lifeTime <= 0) {
+    newErrors.lifeTime = 'Số năm sử dụng phải lớn hơn 0'
+    isValid = false
+  }
+
+  if (form.value.depreciationValueYear < 0) {
+    newErrors.depreciationValueYear = 'Giá trị hao mòn năm không được âm'
+    isValid = false
+  }
+
+  errors.value = newErrors
+  return isValid
 }
 
 // Kiểm tra xem form có thay đổi so với dữ liệu gốc không
@@ -404,13 +532,10 @@ const handleSave = async () => {
   try {
     isLoading.value = true
 
-    // Validate dữ liệu cơ bản
-    if (!form.value.assetCode?.trim()) {
-      showToast({ message: 'Vui lòng nhập mã tài sản', type: 'warning' })
-      return
-    }
-    if (!form.value.assetName?.trim()) {
-      showToast({ message: 'Vui lòng nhập tên tài sản', type: 'warning' })
+    // Validate form
+    if (!validateForm()) {
+      showToast({ message: 'Vui lòng điền đầy đủ thông tin bắt buộc', type: 'warning' })
+      isLoading.value = false
       return
     }
 
@@ -463,13 +588,14 @@ const handleSave = async () => {
   display: grid;
   /* Chia grid thành 11 phần bằng nhau */
   grid-template-columns: repeat(11, 1fr);
-  gap: 20px 20px; /* Khoảng cách giữa các ô */
+  gap: 10px 20px; /* Khoảng cách giữa các ô */
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
+  position: relative;
 }
 
 /* Các lớp định nghĩa độ rộng ô */
@@ -485,8 +611,9 @@ const handleSave = async () => {
 
 .form-group label {
   font-size: 13px;
-  font-weight: 500;
   color: #000;
+  margin-bottom: 8px;
+  height: 20px; /* Chiều cao cố định cho label */
 }
 
 .required {
@@ -507,5 +634,39 @@ const handleSave = async () => {
 
 :deep(.ms-input-wrapper) {
   margin-bottom: 0 !important; /* Xóa margin cũ của component */
+}
+
+:deep(.ms-combo-container .ms-select::placeholder) {
+  font-style: italic;
+}
+
+:deep(.ms-date-picker.ant-picker) {
+  width: 100%;
+  height: 34px;
+  border: 1px solid #afafaf !important;
+  border-radius: 3px !important;
+}
+
+:deep(.ms-date-picker .ant-picker-input > input) {
+  height: 32px;
+  line-height: 32px;
+}
+
+/* Icon date picker từ sprite */
+.icon-date-picker {
+  background-position: -287px -67px;
+  width: 18px;
+  height: 18px;
+  display: inline-block;
+}
+
+.error-message {
+  color: #d9534f;
+  font-size: 12px;
+  margin-top: 2px;
+  display: block;
+  line-height: 1.2;
+  min-height: 10px; /* Chiều cao tối thiểu để giữ không gian cho error */
+  height: 10px; /* Chiều cao cố định */
 }
 </style>

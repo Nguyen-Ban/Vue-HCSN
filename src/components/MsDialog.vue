@@ -79,10 +79,10 @@ const close = () => {
   align-items: center;
   justify-content: center;
 }
-.ms-popup-close:hover {
+/* .ms-popup-close:hover {
   background-color: #eee;
   border-radius: 50%;
-}
+} */
 
 .ms-popup-body {
   padding: 24px;
