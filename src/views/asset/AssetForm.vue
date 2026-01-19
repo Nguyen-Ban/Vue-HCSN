@@ -46,7 +46,10 @@
 
       <div class="form-group col-3">
         <label>Số lượng <span class="required">*</span></label>
-        <MsInput v-model.number="form.quantity" icon="icon icon-caret-up-down" type="number" />
+        <MsInput
+          v-model.number="form.quantity"
+          icon="icon icon-caret-up-down"
+          type="number" />
       </div>
       <div class="form-group col-4">
         <label>Nguyên giá <span class="required">*</span></label>
@@ -72,10 +75,7 @@
 
       <div class="form-group col-3">
         <label>Số năm sử dụng <span class="required">*</span></label>
-        <MsInput v-model.number="form.lifeTime"
-          type="number"
-          icon="icon icon-caret-up-down"
-        />
+        <MsInput v-model.number="form.lifeTime" type="number" />
       </div>
       <div class="form-group col-4">
         <label>Giá trị hao mòn năm <span class="required">*</span></label>
