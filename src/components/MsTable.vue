@@ -3,8 +3,8 @@
     <div class="ms-table-scroll" ref="bodyScroll" @scroll="syncFooterScroll">
       <table>
         <colgroup>
-          <col style="width: 50px" />
-          <col v-for="col in columns" :key="col.key" :style="{ width: col.width }" />
+          <col style="width: 40px" />
+          <col v-for="col in columns" :key="col.key" :style="{ width: getColWidth(col) }" />
           <col style="width: 100px" />
         </colgroup>
         <thead>
@@ -19,7 +19,8 @@
               :style="getThStyle(col, index)"
               :class="{ 'sticky-col': col.sticky }"
             >
-              {{ col.title }}
+              <span class="th-text">{{ col.title }}</span>
+              <span class="col-resizer" @mousedown.prevent="startResize($event, col)"></span>
             </th>
 
             <th class="ms-th-action sticky-col-right" style="text-align: center">Chức năng</th>
@@ -79,11 +80,12 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:selected', 'row-contextmenu'])
+const emit = defineEmits(['update:selected', 'row-contextmenu', 'column-width-change'])
 
 const selectedRows = ref([]) // Chứa ID các dòng được chọn
 const bodyScroll = ref(null)
 const footerScroll = ref(null)
+const widths = ref({})
 
 // Logic chọn tất cả
 const isAllSelected = computed(() => {
@@ -116,7 +118,7 @@ const formatData = (val, type) => {
 
 // Hàm tính toán sticky position
 const getThStyle = (col, index) => {
-  const baseStyle = { textAlign: col.align || 'left' }
+  const baseStyle = { textAlign: col.align || 'left', width: getColWidth(col) }
   if (!col.sticky) return baseStyle
 
   let leftPos = 40 // checkbox width
@@ -135,7 +137,7 @@ const getThStyle = (col, index) => {
 }
 
 const getTdStyle = (col, index) => {
-  const baseStyle = { textAlign: col.align || 'left' }
+  const baseStyle = { textAlign: col.align || 'left', width: getColWidth(col) }
   if (!col.sticky) return baseStyle
 
   let leftPos = 40 // checkbox width
@@ -167,6 +169,48 @@ onMounted(() => {
 const onRowContextMenu = (e, row) => {
   emit('row-contextmenu', { x: e.clientX, y: e.clientY, row })
 }
+
+// --- Column resize ---
+const getColWidth = (col) => {
+  const current = widths.value[col.key]
+  return current ? current + 'px' : col.width || '120px'
+}
+
+const startResize = (e, col) => {
+  const startX = e.clientX
+  const startWidth = widths.value[col.key] || parseInt(col.width) || 120
+
+  const onMove = (evt) => {
+    const delta = evt.clientX - startX
+    const newWidth = Math.max(60, startWidth + delta)
+    widths.value = { ...widths.value, [col.key]: newWidth }
+  }
+
+  const onUp = () => {
+    window.removeEventListener('mousemove', onMove)
+    window.removeEventListener('mouseup', onUp)
+    const finalWidth = widths.value[col.key] || startWidth
+    emit('column-width-change', { key: col.key, width: finalWidth })
+  }
+
+  window.addEventListener('mousemove', onMove)
+  window.addEventListener('mouseup', onUp)
+}
+
+watch(
+  () => props.columns,
+  (cols) => {
+    const next = { ...widths.value }
+    cols?.forEach((c) => {
+      if (!next[c.key]) {
+        const num = parseInt(c.width)
+        if (!isNaN(num)) next[c.key] = num
+      }
+    })
+    widths.value = next
+  },
+  { immediate: true, deep: true },
+)
 </script>
 
 <style scoped>
@@ -194,15 +238,32 @@ table {
 th {
   background-color: #f5f5f5;
   font-weight: 700;
-  padding: 10px 16px;
+  padding: 10px 0px;
   position: sticky;
   top: 0;
   z-index: 10;
   border-bottom: 1px solid #e0e0e0;
   box-sizing: border-box;
 }
+th .th-text {
+  display: inline-block;
+  vertical-align: middle;
+  max-width: calc(100% - 8px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+th .col-resizer {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  z-index: 15;
+}
 td {
-  padding: 10px 16px;
+  padding: 10px 0px;
   border-bottom: 1px solid #e0e0e0;
   box-sizing: border-box;
 }
@@ -229,8 +290,64 @@ tr:hover {
 }
 .ms-th-checkbox,
 .ms-td-checkbox {
-  width: 50px;
+  width: 40px;
   text-align: center;
+}
+
+/* Custom Checkbox Styling */
+.ms-th-checkbox input[type='checkbox'],
+.ms-td-checkbox input[type='checkbox'] {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid #1f1f1f;
+  border-radius: 2px;
+  background-color: #fff;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s ease;
+  vertical-align: middle;
+}
+
+/* Hover state - unchecked */
+.ms-th-checkbox input[type='checkbox']:hover,
+.ms-td-checkbox input[type='checkbox']:hover {
+  border-color: #0075c0;
+  box-shadow: 0 0 0 6px #e6f2ff;
+}
+
+/* Checked state */
+.ms-th-checkbox input[type='checkbox']:checked,
+.ms-td-checkbox input[type='checkbox']:checked {
+  background-color: #00bfff;
+  border-color: #00bfff;
+}
+
+/* Checkmark icon */
+.ms-th-checkbox input[type='checkbox']:checked::before,
+.ms-td-checkbox input[type='checkbox']:checked::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px;
+  height: 10px;
+  background-color: #fff;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='white' d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z'/%3E%3C/svg%3E");
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+}
+
+/* Hover state - checked */
+.ms-th-checkbox input[type='checkbox']:checked:hover,
+.ms-td-checkbox input[type='checkbox']:checked:hover {
+  background-color: #00a8e6;
+  border-color: #00a8e6;
+  box-shadow: 0 0 0 1px #b3e5fc;
 }
 .action-group {
   display: flex;

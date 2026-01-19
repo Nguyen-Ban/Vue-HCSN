@@ -210,7 +210,7 @@ watch(
 watch(
   () => props.initialData,
   (newData) => {
-    if (newData && props.mode === 'edit') {
+    if (newData && (props.mode === 'edit' || newData.duplicateMode)) {
       // Map dữ liệu từ backend (snake_case hoặc camelCase) vào form
       const departmentCode = newData.department_code || newData.departmentCode
       const departmentName = newData.department_name || newData.departmentName || ''

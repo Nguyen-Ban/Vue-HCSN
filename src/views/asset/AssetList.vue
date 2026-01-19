@@ -17,7 +17,7 @@
           itemText="name"
           placeholder="Loại tài sản"
           icon="icon icon-filter"
-          style="width: 220px"
+          style="width: 220px; --placeholder-color: #1f1f1f"
         />
 
         <MsCombobox
@@ -28,7 +28,7 @@
           itemText="name"
           placeholder="Bộ phận sử dụng"
           icon="icon icon-filter"
-          style="width: 220px"
+          style="width: 220px; --placeholder-color: #1f1f1f"
         />
       </div>
 
@@ -57,6 +57,7 @@
       :data="assetData"
       v-model:selected="selectedAssetIds"
       @row-contextmenu="onRowContextMenu"
+      @column-width-change="onColumnWidthChange"
     >
       <template #cost="{ value }">
         <div style="text-align: right">{{ formatMoney(value) }}</div>
@@ -80,21 +81,17 @@
       </template>
 
       <template #footer>
-        <table style="width: 100%; border-collapse: collapse; table-layout: fixed">
+        <table
+          :style="{
+            width: footerTableWidth + 'px',
+            borderCollapse: 'collapse',
+            tableLayout: 'fixed',
+          }"
+        >
           <colgroup>
-            <col style="width: 50px" />
-            <col style="width: 50px" />
-            <col style="width: 120px" />
-            <col style="width: 200px" />
-            <col style="width: 200px" />
-            <col style="width: 200px" />
+            <col style="width: 40px" />
+            <col v-for="col in tableColumns" :key="col.key" :style="{ width: col.width }" />
             <col style="width: 100px" />
-            <col style="width: 180px" />
-            <col style="width: 180px" />
-            <col style="width: 140px" />
-            <col style="width: 100px" />
-            <col style="width: 120px" />
-            <col style="width: 150px" />
           </colgroup>
           <tfoot>
             <tr>
@@ -107,15 +104,18 @@
                   vertical-align: middle;
                 "
               >
-                <div style="display: flex; align-items: center; gap: 12px">
-                  <span style="white-space: nowrap">
+                <div style="display: flex; align-items: center; gap: 32px">
+                  <span style="white-space: nowrap; font-size: 11px">
                     Tổng số: <strong>{{ totalRecords }}</strong> bản ghi
                   </span>
-                  <select v-model="pageSize" class="ms-page-size-select">
-                    <option value="10">10</option>
-                    <option value="20">20</option>
-                    <option value="50">50</option>
-                  </select>
+                  <div class="ms-select-wrapper">
+                    <select v-model="pageSize" class="ms-page-size-select">
+                      <option value="10">10</option>
+                      <option value="20">20</option>
+                      <option value="50">50</option>
+                    </select>
+                    <div class="icon-arrow-down"></div>
+                  </div>
 
                   <span style="display: inline-flex; align-items: center; gap: 4px">
                     <button
@@ -146,29 +146,64 @@
                   </span>
                 </div>
               </td>
-              <td style="text-align: right; padding: 10px 16px; border-bottom: 1px solid #e0e0e0">
+              <td
+                style="
+                  text-align: right;
+                  padding: 10px 0px;
+                  border-bottom: 1px solid #e0e0e0;
+                  font-weight: 700;
+                "
+              >
                 {{ totals.quantity }}
               </td>
-              <td style="text-align: right; padding: 10px 16px; border-bottom: 1px solid #e0e0e0">
+              <td
+                style="
+                  text-align: right;
+                  padding: 10px 0px;
+                  border-bottom: 1px solid #e0e0e0;
+                  font-weight: 700;
+                "
+              >
                 {{ formatMoney(totals.cost) }}
               </td>
-              <td style="text-align: right; padding: 10px 16px; border-bottom: 1px solid #e0e0e0">
+              <td
+                style="
+                  text-align: right;
+                  padding: 10px 0px;
+                  border-bottom: 1px solid #e0e0e0;
+                  font-weight: 700;
+                "
+              >
                 {{ formatMoney(totals.accumulatedDepreciation) }}
               </td>
-              <td style="text-align: right; padding: 10px 16px; border-bottom: 1px solid #e0e0e0">
+              <td
+                style="
+                  text-align: right;
+                  padding: 10px 0px;
+                  border-bottom: 1px solid #e0e0e0;
+                  font-weight: 700;
+                "
+              >
                 {{ formatMoney(totals.remainingValue) }}
               </td>
               <td
-                style="text-align: right; padding: 10px 16px; border-bottom: 1px solid #e0e0e0"
+                style="text-align: right; padding: 10px 0px; border-bottom: 1px solid #e0e0e0"
               ></td>
               <td
-                style="text-align: right; padding: 10px 16px; border-bottom: 1px solid #e0e0e0"
+                style="text-align: right; padding: 10px 0px; border-bottom: 1px solid #e0e0e0"
               ></td>
-              <td style="text-align: right; padding: 10px 16px; border-bottom: 1px solid #e0e0e0">
+              <td
+                style="
+                  text-align: right;
+                  padding: 10px 0px;
+                  border-bottom: 1px solid #e0e0e0;
+                  font-weight: 700;
+                "
+              >
                 {{ formatMoney(totals.depreciationValueYear) }}
               </td>
 
-              <td style="padding: 10px 16px; border-bottom: 1px solid #e0e0e0"></td>
+              <td style="padding: 10px 0px; border-bottom: 1px solid #e0e0e0"></td>
             </tr>
           </tfoot>
         </table>
@@ -298,7 +333,7 @@ const assetTypes = ref([])
 const departments = ref([])
 
 // --- Table Configuration ---
-const tableColumns = [
+const tableColumns = ref([
   { key: 'stt', title: 'STT', width: '50px', align: 'center' },
   { key: 'assetCode', title: 'Mã tài sản', width: '120px' },
   { key: 'assetName', title: 'Tên tài sản', width: '200px' },
@@ -311,7 +346,7 @@ const tableColumns = [
   { key: 'productionYear', title: 'Năm sử dụng', width: '100px', align: 'right' },
   { key: 'depreciationRate', title: 'Tỷ lệ hao mòn (%)', width: '120px', align: 'right' },
   { key: 'depreciationValueYear', title: 'Giá trị hao mòn năm', width: '150px', align: 'right' },
-]
+])
 
 // --- Mock Data Rows ---
 const assetData = ref([])
@@ -336,6 +371,12 @@ const onRowContextMenu = ({ x, y, row }) => {
 
 const hideRowMenu = () => {
   rowMenu.value.visible = false
+}
+
+const onColumnWidthChange = ({ key, width }) => {
+  tableColumns.value = tableColumns.value.map((col) =>
+    col.key === key ? { ...col, width: width + 'px' } : col,
+  )
 }
 
 // Map dữ liệu từ backend response về format frontend
@@ -476,6 +517,16 @@ const totals = computed(() => {
   )
 })
 
+const footerTableWidth = computed(() => {
+  // checkbox (40) + action (100) + sum of column widths
+  let total = 140
+  tableColumns.value.forEach((col) => {
+    const num = parseInt(col.width)
+    total += isNaN(num) ? 120 : num
+  })
+  return total
+})
+
 // --- Methods ---
 const formatMoney = (value) => {
   return new Intl.NumberFormat('vi-VN').format(value)
@@ -546,30 +597,36 @@ const saveAsset = () => {
   handleSaveAsset(formData.value)
 }
 
-const duplicateAsset = (row) => {
-  const assetId = row.id || row.fixed_asset_id
-  if (!assetId) {
-    showToast({ message: 'Không tìm thấy ID tài sản', type: 'error' })
-    return
-  }
+const duplicateAsset = async (row) => {
+  try {
+    const assetId = row.id || row.fixed_asset_id;
+    if (!assetId) return;
 
-  const codeName = `${row.assetCode} - ${row.assetName}`
-  showDeleteConfirm({
-    mode: 'duplicate',
-    title: 'Nhân bản tài sản',
-    text: `Bạn có muốn nhân bản tài sản ${codeName}?`,
-    onConfirm: async () => {
-      try {
-        const res = await fixedAssetApi.duplicate(assetId)
-        showToast({ message: res?.message || 'Nhân bản thành công.', type: 'success' })
-        await loadData()
-      } catch (err) {
-        console.error(err)
-        const msg = err?.response?.data?.message || 'Nhân bản thất bại.'
-        showToast({ message: msg, type: 'error' })
-      }
-    },
-  })
+    // 1. Lấy chi tiết tài sản gốc từ Backend
+    const sourceAsset = await fixedAssetApi.getById(assetId);
+
+    // 2. Lấy mã tài sản mới (tăng tự động)
+    const newCode = await fixedAssetApi.getNewCode();
+
+    // 3. Chuẩn bị dữ liệu cho Form
+    // Mẹo: Thêm property 'duplicateMode: true' để AssetForm nhận biết
+    formData.value = {
+      ...sourceAsset,
+      fixed_asset_code: newCode, // Gán mã mới
+      fixed_asset_name: sourceAsset.fixed_asset_name + ' (Nhân bản)', // (Tuỳ chọn) Gợi ý tên
+      fixed_asset_id: null,      // Quan trọng: Xóa ID để tính là thêm mới
+      id: null,                  // Xóa ID
+      duplicateMode: true        // Cờ đánh dấu đang nhân bản
+    };
+
+    // 4. Mở form ở chế độ 'add' (để nút Lưu gọi API Create)
+    dialogMode.value = 'add';
+    showDialog.value = true;
+
+  } catch (error) {
+    console.error('Lỗi khi chuẩn bị dữ liệu nhân bản:', error);
+    showToast({ message: 'Không thể lấy dữ liệu để nhân bản.', type: 'error' });
+  }
 }
 
 // --- Context Menu Actions ---
@@ -787,13 +844,16 @@ const confirmDeleteSelected = () => {
   background: transparent;
   cursor: pointer;
   color: #1f1f1f;
-  padding: 4px 8px;
-  min-width: 32px;
+  padding: 4px 4px;
+  min-width: 20px;
   text-align: center;
+  font-size: 11px;
 }
 
 .ms-page-number.active {
   font-weight: bold;
+  background-color: #f5f5f5;
+  border-radius: 3px;
 }
 
 .ms-page-number:hover:not(.active) {
@@ -805,23 +865,43 @@ const confirmDeleteSelected = () => {
   color: #666;
 }
 
+.ms-select-wrapper {
+  display: inline-block;
+  position: relative;
+}
+
+/* 2. Style cho Icon mới */
+.icon-arrow-down {
+  /* --- Code gốc của bạn (giữ nguyên phần mask) --- */
+  mask-image: url('../../assets/icons/qlts-icon.svg');
+  mask-position: -72px -338px;
+  width: 7px;
+  height: 5px;
+
+  /* --- Phần thêm mới để căn chỉnh --- */
+  background-color: #1f1f1f; /* QUAN TRỌNG: Đổi màu trắng thành đen để nhìn thấy */
+  position: absolute;
+  top: 50%;
+  right: 12px; /* Cách lề phải một chút */
+  transform: translateY(-50%); /* Căn giữa theo chiều dọc */
+  pointer-events: none; /* CỰC KỲ QUAN TRỌNG: Để click vào icon vẫn ăn vào Select bên dưới */
+  z-index: 1;
+}
+
 .ms-page-size-select {
-  height: 32px;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
-  padding: 0 8px;
+  height: 25px;
+  width: 60px;
+  padding: 0 14px;
   color: #1f1f1f;
-  background-color: #fff;
-  font-size: 13px;
+  font-size: 11px;
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231f1f1f' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 4px center;
-  background-size: 18px;
-  padding-right: 28px;
+  background-color: #ffffff;
+  border-radius: 2.625px;
+  border: 1px solid #afafaf;
+  overflow: hidden;
 }
 
 .ms-page-size-select:hover {

@@ -4,7 +4,8 @@
       <div class="ms-popup-header">
         <div class="ms-popup-title">{{ title }}</div>
         <div class="ms-popup-close" @click="close" title="Đóng (Esc)">
-            <div class="icon icon-close"></div> </div>
+          <div class="icon icon-close"></div>
+        </div>
       </div>
 
       <div class="ms-popup-body">
@@ -22,20 +23,23 @@
 defineProps({
   modelValue: { type: Boolean, default: false }, // Trạng thái đóng/mở
   title: { type: String, default: 'Tiêu đề' },
-  width: { type: String, default: '800px' }
-});
+  width: { type: String, default: '800px' },
+})
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue'])
 
 const close = () => {
-  emit('update:modelValue', false);
-};
+  emit('update:modelValue', false)
+}
 </script>
 
 <style scoped>
 .ms-popup-overlay {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background-color: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
@@ -46,7 +50,7 @@ const close = () => {
 .ms-popup {
   background-color: #fff;
   border-radius: 4px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
   max-height: 90vh; /* Không cao quá màn hình */
@@ -71,7 +75,9 @@ const close = () => {
   color: #666;
   width: 24px;
   height: 24px;
-  display: flex; align-items: center; justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .ms-popup-close:hover {
   background-color: #eee;
@@ -82,6 +88,8 @@ const close = () => {
   padding: 24px;
   overflow-y: auto;
   flex: 1;
+  /* Luôn dành chỗ cho scrollbar để tránh layout shift */
+  scrollbar-gutter: stable;
 }
 
 .ms-popup-footer {

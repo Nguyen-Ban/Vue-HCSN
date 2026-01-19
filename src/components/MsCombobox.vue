@@ -112,6 +112,12 @@ const filteredOptions = computed(() => {
  */
 const onSearch = (e) => {
   searchText.value = e.target.value
+
+  // Nếu ô lọc trống → xóa lựa chọn để quay lại danh sách ban đầu
+  if (!searchText.value.trim()) {
+    emit('update:modelValue', null)
+  }
+
   if (!isOpen.value) {
     isOpen.value = true
   }
@@ -124,6 +130,9 @@ const toggleDropdown = () => {
   isOpen.value = !isOpen.value
   if (isOpen.value) {
     searchText.value = ''
+  }
+  if (!searchText.value.trim()) {
+    emit('update:modelValue', null)
   }
 }
 
@@ -212,7 +221,7 @@ onUnmounted(() => document.removeEventListener('click', closeDropdown))
   outline: none;
 }
 .ms-select::placeholder {
-  color: #999;
+  color: var(--placeholder-color, #999);
 }
 .ms-combo-icon {
   position: absolute;
