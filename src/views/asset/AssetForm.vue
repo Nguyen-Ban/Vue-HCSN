@@ -1,5 +1,10 @@
 <template>
-  <MsDialog v-model="isOpen" :title="mode === 'add' ? 'Thêm tài sản' : 'Sửa tài sản'" width="900px">
+  <MsDialog
+    v-model="isOpen"
+    :title="mode === 'add' ? 'Thêm tài sản' : 'Sửa tài sản'"
+    width="900px"
+    @close="handleClose"
+  >
     <div class="asset-form-grid">
       <div class="form-group col-3">
         <label>Mã tài sản <span class="required">*</span></label>
@@ -137,6 +142,10 @@ import MsCombobox from '../../components/MsCombobox.vue'
 import MsButton from '../../components/MsButton.vue'
 import fixedAssetApi from '../../apis/fixedAssetApi'
 import { showToast, showUnsavedChangeConfirm, showDeleteConfirm } from '../../stores/notification'
+import { normalizeDate } from '../../utils/formatters'
+import { validateAssetForm, allowOnlyNumbers } from '../../utils/validators'
+import { mapBackendDataToForm, mapFormToBackendData } from '../../utils/assetHelpers'
+import { useNumberFormat } from '../../composables/useNumberFormat'
 
 const props = defineProps({
   modelValue: Boolean,
@@ -189,79 +198,18 @@ const errors = ref({
 
 const isLoading = ref(false)
 
-// Chỉ cho phép nhập số
-const allowOnlyNumbers = (event) => {
-  const charCode = event.which ? event.which : event.keyCode
-  // Chỉ cho phép số (0-9)
-  if (charCode < 48 || charCode > 57) {
-    event.preventDefault()
-  }
-}
-
-// Format số với dấu chấm phân cách hàng nghìn
-const formatNumber = (value) => {
-  if (!value && value !== 0) return ''
-  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')
-}
-
-// Parse số từ string có dấu chấm
-const parseFormattedNumber = (value) => {
-  if (!value) return 0
-  return parseInt(value.replace(/\./g, '')) || 0
-}
-
-// Computed cho nguyên giá được format
-const formattedCost = computed({
-  get: () => formatNumber(form.value.cost),
-  set: (value) => {
-    form.value.cost = parseFormattedNumber(value)
-  },
-})
-
-// Handler cho input nguyên giá
-const handleCostInput = (event) => {
-  const input = event.target.value
-  // Chỉ cho phép số và dấu chấm
-  const cleaned = input.replace(/[^0-9]/g, '')
-  form.value.cost = parseInt(cleaned) || 0
-}
-
-// Computed cho giá trị hao mòn năm được format
-const formattedDepreciationValueYear = computed({
-  get: () => formatNumber(form.value.depreciationValueYear),
-  set: (value) => {
-    form.value.depreciationValueYear = parseFormattedNumber(value)
-  },
-})
-
-// Handler cho input giá trị hao mòn năm
-const handleDepreciationValueYearInput = (event) => {
-  const input = event.target.value
-  // Chỉ cho phép số
-  const cleaned = input.replace(/[^0-9]/g, '')
-  form.value.depreciationValueYear = parseInt(cleaned) || 0
-}
+// Sử dụng composable cho format số
+const { formattedValue: formattedCost, handleInput: handleCostInput } = useNumberFormat(
+  form,
+  'cost',
+)
+const {
+  formattedValue: formattedDepreciationValueYear,
+  handleInput: handleDepreciationValueYearInput,
+} = useNumberFormat(form, 'depreciationValueYear')
 
 // Lưu dữ liệu gốc để so sánh sau này khi sửa
 const originalFormData = ref(null)
-
-// Chuẩn hoá ngày thành yyyy-MM-dd để input type="date" đọc được
-// Giữ nguyên cả các ngày rất nhỏ (ví dụ 0001-01-01) theo yêu cầu backend
-const normalizeDate = (value) => {
-  if (!value) return ''
-  const d = new Date(value)
-  if (Number.isNaN(d.getTime())) return ''
-  return d.toISOString().slice(0, 10)
-}
-
-// Tìm id theo code hoặc name từ danh sách options (departments / assetTypes)
-const findIdByCodeOrName = (list, codeValue, nameValue) => {
-  if (!list || list.length === 0) return ''
-  const found = list.find(
-    (item) => String(item.code) === String(codeValue) || item.name === nameValue,
-  )
-  return found?.id || ''
-}
 
 // Watch departmentId để tự động điền departmentName
 watch(
@@ -286,6 +234,13 @@ watch(
       const type = props.assetTypes?.find((t) => t.id === newId)
       if (type) {
         form.value.assetTypeName = type.name
+        // Tự động điền số năm sử dụng và tỷ lệ hao mòn nếu danh mục có cung cấp
+        if (typeof type.lifeTime !== 'undefined' && type.lifeTime !== null) {
+          form.value.lifeTime = Number(type.lifeTime) || 0
+        }
+        if (typeof type.depreciationRate !== 'undefined' && type.depreciationRate !== null) {
+          form.value.depreciationRate = Number(type.depreciationRate) || 0
+        }
       }
     } else {
       form.value.assetTypeName = ''
@@ -319,82 +274,7 @@ watch(
   () => props.initialData,
   (newData) => {
     if (newData && (props.mode === 'edit' || newData.duplicateMode)) {
-      // Map dữ liệu từ backend (snake_case hoặc camelCase) vào form
-      const departmentCode = newData.department_code || newData.departmentCode
-      const departmentName = newData.department_name || newData.departmentName || ''
-
-      // Ưu tiên lấy ID trực tiếp từ backend, nếu không có thì mới tìm bằng code/name
-      let departmentIdRaw = newData.department_id || newData.departmentId
-      if (!departmentIdRaw && (departmentCode || departmentName)) {
-        departmentIdRaw = findIdByCodeOrName(props.departments, departmentCode, departmentName)
-      }
-      const departmentId = departmentIdRaw || ''
-
-      const assetTypeCode =
-        newData.fixed_asset_category_code || newData.fixedAssetCategoryCode || newData.assetTypeCode
-      const assetTypeName =
-        newData.fixed_asset_category_name ||
-        newData.assetTypeName ||
-        newData.assetCategoryName ||
-        ''
-
-      // Ưu tiên lấy ID trực tiếp từ backend, nếu không có thì mới tìm bằng code/name
-      let assetTypeIdRaw = newData.fixed_asset_category_id || newData.assetTypeId
-      if (!assetTypeIdRaw && (assetTypeCode || assetTypeName)) {
-        assetTypeIdRaw = findIdByCodeOrName(props.assetTypes, assetTypeCode, assetTypeName)
-      }
-      const assetTypeId = assetTypeIdRaw || ''
-
-      console.log('=== DEBUG FORM DATA ===')
-      console.log(
-        'departmentCode:',
-        departmentCode,
-        '| departmentId:',
-        departmentId,
-        '| type:',
-        typeof departmentId,
-      )
-      console.log(
-        'assetTypeCode:',
-        assetTypeCode,
-        '| assetTypeId:',
-        assetTypeId,
-        '| type:',
-        typeof assetTypeId,
-      )
-      console.log('purchase_date:', newData.purchase_date)
-      console.log('departments:', props.departments)
-      console.log('assetTypes:', props.assetTypes)
-
-      // Kiểm tra xem có tìm thấy department trong danh sách không
-      const foundDept = props.departments?.find((d) => d.id == departmentId)
-      console.log('Found department:', foundDept)
-      const foundAssetType = props.assetTypes?.find((t) => t.id == assetTypeId)
-      console.log('Found assetType:', foundAssetType)
-
-      // Chuẩn hoá ngày mua/sử dụng
-      const purchaseDateFormatted = normalizeDate(newData.purchase_date || '')
-      const usedStartDateFormatted = normalizeDate(newData.used_start_date || '')
-      const usedStartDateFinal = usedStartDateFormatted || purchaseDateFormatted || ''
-
-      form.value = {
-        id: newData.id || newData.fixed_asset_id,
-        fixed_asset_id: newData.fixed_asset_id || newData.id,
-        assetCode: newData.fixed_asset_code || newData.assetCode || '',
-        assetName: newData.fixed_asset_name || newData.assetName || '',
-        assetTypeId,
-        assetTypeName,
-        departmentId,
-        departmentName,
-        quantity: newData.quantity || 1,
-        cost: newData.cost || 0,
-        depreciationRate: newData.depreciation_rate || 0,
-        purchaseDate: purchaseDateFormatted,
-        usedStartDate: usedStartDateFinal,
-        trackedYear: newData.tracked_year || new Date().getFullYear(),
-        lifeTime: newData.life_time || 0,
-        depreciationValueYear: newData.depreciation_value_year || 0,
-      }
+      form.value = mapBackendDataToForm(newData, props.departments, props.assetTypes, normalizeDate)
       // Lưu bản sao dữ liệu gốc
       originalFormData.value = JSON.parse(JSON.stringify(form.value))
     } else {
@@ -447,76 +327,7 @@ const resetForm = () => {
 }
 
 const validateForm = () => {
-  let isValid = true
-  const newErrors = {
-    assetCode: '',
-    assetName: '',
-    departmentId: '',
-    assetTypeId: '',
-    quantity: '',
-    cost: '',
-    depreciationRate: '',
-    purchaseDate: '',
-    usedStartDate: '',
-    lifeTime: '',
-    depreciationValueYear: '',
-  }
-
-  if (!form.value.assetCode?.trim()) {
-    newErrors.assetCode = 'Mã tài sản không được để trống'
-    isValid = false
-  }
-
-  if (!form.value.assetName?.trim()) {
-    newErrors.assetName = 'Tên tài sản không được để trống'
-    isValid = false
-  }
-
-  if (!form.value.departmentId) {
-    newErrors.departmentId = 'Bộ phận sử dụng không được để trống'
-    isValid = false
-  }
-
-  if (!form.value.assetTypeId) {
-    newErrors.assetTypeId = 'Loại tài sản không được để trống'
-    isValid = false
-  }
-
-  if (!form.value.quantity || form.value.quantity <= 0) {
-    newErrors.quantity = 'Số lượng phải lớn hơn 0'
-    isValid = false
-  }
-
-  if (form.value.cost < 0) {
-    newErrors.cost = 'Nguyên giá không được âm'
-    isValid = false
-  }
-
-  if (form.value.depreciationRate < 0 || form.value.depreciationRate > 100) {
-    newErrors.depreciationRate = 'Tỷ lệ hao mòn phải từ 0-100%'
-    isValid = false
-  }
-
-  if (!form.value.purchaseDate) {
-    newErrors.purchaseDate = 'Ngày mua không được để trống'
-    isValid = false
-  }
-
-  if (!form.value.usedStartDate) {
-    newErrors.usedStartDate = 'Ngày bắt đầu sử dụng không được để trống'
-    isValid = false
-  }
-
-  if (!form.value.lifeTime || form.value.lifeTime <= 0) {
-    newErrors.lifeTime = 'Số năm sử dụng phải lớn hơn 0'
-    isValid = false
-  }
-
-  if (form.value.depreciationValueYear < 0) {
-    newErrors.depreciationValueYear = 'Giá trị hao mòn năm không được âm'
-    isValid = false
-  }
-
+  const { errors: newErrors, isValid } = validateAssetForm(form.value)
   errors.value = newErrors
   return isValid
 }
@@ -604,22 +415,7 @@ const handleSave = async () => {
       return
     }
 
-    const formData = {
-      fixed_asset_code: form.value.assetCode,
-      fixed_asset_name: form.value.assetName,
-      department_id: form.value.departmentId,
-      department_name: form.value.departmentName,
-      fixed_asset_category_id: form.value.assetTypeId,
-      fixed_asset_category_name: form.value.assetTypeName,
-      quantity: form.value.quantity,
-      cost: form.value.cost,
-      depreciation_rate: form.value.depreciationRate,
-      purchase_date: form.value.purchaseDate,
-      used_start_date: form.value.usedStartDate,
-      tracked_year: form.value.trackedYear,
-      life_time: form.value.lifeTime,
-      depreciation_value_year: form.value.depreciationValueYear,
-    }
+    const formData = mapFormToBackendData(form.value)
 
     if (props.mode === 'add') {
       await fixedAssetApi.create(formData)

@@ -3,7 +3,7 @@
     <div class="ms-popup" :style="{ width: width }">
       <div class="ms-popup-header">
         <div class="ms-popup-title">{{ title }}</div>
-        <div class="ms-popup-close" @click="close" title="Đóng (Esc)">
+        <div class="ms-popup-close" @click="handleClose" title="Đóng (Esc)">
           <div class="icon icon-close"></div>
         </div>
       </div>
@@ -26,10 +26,14 @@ defineProps({
   width: { type: String, default: '800px' },
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'close'])
 
 const close = () => {
   emit('update:modelValue', false)
+}
+
+const handleClose = () => {
+  emit('close')
 }
 </script>
 

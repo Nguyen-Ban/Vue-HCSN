@@ -256,6 +256,7 @@ import MsCombobox from '../../components/MsCombobox.vue'
 import MsTable from '../../components/MsTable.vue'
 import AssetForm from './AssetForm.vue'
 import { showDeleteConfirm, showToast } from '../../stores/notification'
+import { formatMoney } from '../../utils/formatters'
 
 // Debounce helper
 function debounce(func, wait) {
@@ -468,6 +469,8 @@ const loadAssetCategories = async () => {
       id: item.fixed_asset_category_id || item.fixedAssetCategoryId,
       code: item.fixed_asset_category_code || item.fixedAssetCategoryCode,
       name: item.fixed_asset_category_name || item.fixedAssetCategoryName || item.assetCategoryName,
+      lifeTime: item.life_time ?? item.lifeTime ?? 0,
+      depreciationRate: item.depreciation_rate ?? item.depreciationRate ?? 0,
     }))
   } catch (error) {
     console.error('Lỗi khi lấy danh sách loại tài sản:', error)
@@ -528,10 +531,6 @@ const footerTableWidth = computed(() => {
 })
 
 // --- Methods ---
-const formatMoney = (value) => {
-  return new Intl.NumberFormat('vi-VN').format(value)
-}
-
 const openAddModal = async () => {
   dialogMode.value = 'add'
   let newCode = ''
@@ -583,30 +582,22 @@ const editAsset = async (row) => {
   }
 }
 
-const closeDialog = () => {
-  showDialog.value = false
-}
-
 const handleSaveAsset = async (data) => {
   console.log('Lưu tài sản:', data)
   // Reload lại dữ liệu sau khi lưu
   await loadData()
 }
 
-const saveAsset = () => {
-  handleSaveAsset(formData.value)
-}
-
 const duplicateAsset = async (row) => {
   try {
-    const assetId = row.id || row.fixed_asset_id;
-    if (!assetId) return;
+    const assetId = row.id || row.fixed_asset_id
+    if (!assetId) return
 
     // 1. Lấy chi tiết tài sản gốc từ Backend
-    const sourceAsset = await fixedAssetApi.getById(assetId);
+    const sourceAsset = await fixedAssetApi.getById(assetId)
 
     // 2. Lấy mã tài sản mới (tăng tự động)
-    const newCode = await fixedAssetApi.getNewCode();
+    const newCode = await fixedAssetApi.getNewCode()
 
     // 3. Chuẩn bị dữ liệu cho Form
     // Mẹo: Thêm property 'duplicateMode: true' để AssetForm nhận biết
@@ -614,18 +605,17 @@ const duplicateAsset = async (row) => {
       ...sourceAsset,
       fixed_asset_code: newCode, // Gán mã mới
       fixed_asset_name: sourceAsset.fixed_asset_name + ' (Nhân bản)', // (Tuỳ chọn) Gợi ý tên
-      fixed_asset_id: null,      // Quan trọng: Xóa ID để tính là thêm mới
-      id: null,                  // Xóa ID
-      duplicateMode: true        // Cờ đánh dấu đang nhân bản
-    };
+      fixed_asset_id: null, // Quan trọng: Xóa ID để tính là thêm mới
+      id: null, // Xóa ID
+      duplicateMode: true, // Cờ đánh dấu đang nhân bản
+    }
 
     // 4. Mở form ở chế độ 'add' (để nút Lưu gọi API Create)
-    dialogMode.value = 'add';
-    showDialog.value = true;
-
+    dialogMode.value = 'add'
+    showDialog.value = true
   } catch (error) {
-    console.error('Lỗi khi chuẩn bị dữ liệu nhân bản:', error);
-    showToast({ message: 'Không thể lấy dữ liệu để nhân bản.', type: 'error' });
+    console.error('Lỗi khi chuẩn bị dữ liệu nhân bản:', error)
+    showToast({ message: 'Không thể lấy dữ liệu để nhân bản.', type: 'error' })
   }
 }
 
