@@ -141,7 +141,12 @@ import MsInput from '../../components/MsInput.vue'
 import MsCombobox from '../../components/MsCombobox.vue'
 import MsButton from '../../components/MsButton.vue'
 import fixedAssetApi from '../../apis/fixedAssetApi'
-import { showToast, showUnsavedChangeConfirm, showDeleteConfirm } from '../../stores/notification'
+import {
+  showToast,
+  showUnsavedChangeConfirm,
+  showDeleteConfirm,
+  showAlert,
+} from '../../stores/notification'
 import { normalizeDate } from '../../utils/formatters'
 import { validateAssetForm, allowOnlyNumbers } from '../../utils/validators'
 import { mapBackendDataToForm, mapFormToBackendData } from '../../utils/assetHelpers'
@@ -327,9 +332,9 @@ const resetForm = () => {
 }
 
 const validateForm = () => {
-  const { errors: newErrors, isValid } = validateAssetForm(form.value)
+  const { errors: newErrors, isValid, firstMissingField } = validateAssetForm(form.value)
   errors.value = newErrors
-  return isValid
+  return { isValid, firstMissingField }
 }
 
 // Kiểm tra xem form có thay đổi so với dữ liệu gốc không
@@ -409,8 +414,10 @@ const handleSave = async () => {
     isLoading.value = true
 
     // Validate form
-    if (!validateForm()) {
-      showToast({ message: 'Vui lòng điền đầy đủ thông tin bắt buộc', type: 'warning' })
+    const { isValid, firstMissingField } = validateForm()
+    if (!isValid) {
+      const label = firstMissingField || 'thông tin bắt buộc'
+      showAlert({ text: `Cần nhập thông tin <strong>${label}</strong>.` })
       isLoading.value = false
       return
     }

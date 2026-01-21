@@ -8,8 +8,8 @@ const state = reactive({
     title: '',
     text: '',
     onConfirm: null, // Nút "Xóa" hoặc "Lưu"
-    onDeny: null,    // Nút "Không lưu" (cho trường hợp 3 nút)
-    onCancel: null,  // Nút "Không" hoặc "Hủy bỏ"
+    onDeny: null, // Nút "Không lưu" (cho trường hợp 3 nút)
+    onCancel: null, // Nút "Không" hoặc "Hủy bỏ"
   },
 })
 
@@ -37,7 +37,7 @@ export function showDeleteConfirm({ mode, title, text, onConfirm, onCancel }) {
     text: text,
     onConfirm: onConfirm || (() => {}),
     onCancel: onCancel || (() => {}),
-    onDeny: null
+    onDeny: null,
   }
 }
 
@@ -47,10 +47,25 @@ export function showUnsavedChangeConfirm({ title, text, onConfirm, onDeny, onCan
     visible: true,
     mode: 'unsaved',
     title: title || 'Dữ liệu chưa được lưu',
-    text: text || 'Thông tin thay đổi sẽ không được cập nhật nếu bạn không lưu. Bạn có muốn lưu các thay đổi này?',
+    text:
+      text ||
+      'Thông tin thay đổi sẽ không được cập nhật nếu bạn không lưu. Bạn có muốn lưu các thay đổi này?',
     onConfirm: onConfirm || (() => {}),
     onDeny: onDeny || (() => {}),
-    onCancel: onCancel || (() => {})
+    onCancel: onCancel || (() => {}),
+  }
+}
+
+// Hiển thị cảnh báo 1 nút (Đóng)
+export function showAlert({ title, text, onClose }) {
+  state.confirm = {
+    visible: true,
+    mode: 'alert',
+    title: title || 'Thông báo',
+    text: text || '',
+    onConfirm: onClose || (() => {}),
+    onCancel: onClose || (() => {}),
+    onDeny: null,
   }
 }
 

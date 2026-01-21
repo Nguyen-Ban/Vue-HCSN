@@ -5,6 +5,7 @@
  */
 export const validateAssetForm = (form) => {
   let isValid = true
+  let firstMissingField = ''
   const errors = {
     assetCode: '',
     assetName: '',
@@ -19,28 +20,37 @@ export const validateAssetForm = (form) => {
     depreciationValueYear: '',
   }
 
+  const setFirstMissing = (label) => {
+    if (!firstMissingField) firstMissingField = label
+  }
+
   if (!form.assetCode?.trim()) {
     errors.assetCode = 'Mã tài sản không được để trống'
+    setFirstMissing('Mã tài sản')
     isValid = false
   }
 
   if (!form.assetName?.trim()) {
     errors.assetName = 'Tên tài sản không được để trống'
+    setFirstMissing('Tên tài sản')
     isValid = false
   }
 
   if (!form.departmentId) {
     errors.departmentId = 'Bộ phận sử dụng không được để trống'
+    setFirstMissing('Bộ phận sử dụng')
     isValid = false
   }
 
   if (!form.assetTypeId) {
     errors.assetTypeId = 'Loại tài sản không được để trống'
+    setFirstMissing('Loại tài sản')
     isValid = false
   }
 
   if (!form.quantity || form.quantity <= 0) {
     errors.quantity = 'Số lượng phải lớn hơn 0'
+    setFirstMissing('Số lượng')
     isValid = false
   }
 
@@ -56,16 +66,19 @@ export const validateAssetForm = (form) => {
 
   if (!form.purchaseDate) {
     errors.purchaseDate = 'Ngày mua không được để trống'
+    setFirstMissing('Ngày mua')
     isValid = false
   }
 
   if (!form.usedStartDate) {
     errors.usedStartDate = 'Ngày bắt đầu sử dụng không được để trống'
+    setFirstMissing('Ngày bắt đầu sử dụng')
     isValid = false
   }
 
   if (!form.lifeTime || form.lifeTime <= 0) {
     errors.lifeTime = 'Số năm sử dụng phải lớn hơn 0'
+    setFirstMissing('Số năm sử dụng')
     isValid = false
   }
 
@@ -74,7 +87,7 @@ export const validateAssetForm = (form) => {
     isValid = false
   }
 
-  return { errors, isValid }
+  return { errors, isValid, firstMissingField }
 }
 
 /**

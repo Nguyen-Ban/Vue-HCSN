@@ -29,6 +29,12 @@
               </div>
             </template>
 
+            <template v-else-if="state.confirm.mode === 'alert'">
+              <div class="right-group single">
+                <MsButton type="primary" @click="handleCloseAlert">Đóng</MsButton>
+              </div>
+            </template>
+
             <template v-else-if="state.confirm.mode === 'duplicate'">
               <div class="right-group">
                 <MsButton type="outline" @click="handleCancel">Không</MsButton>
@@ -72,6 +78,11 @@ const handleDeny = () => {
 }
 const handleCancel = () => {
   if (state.confirm.onCancel) state.confirm.onCancel()
+  closeConfirm()
+}
+
+const handleCloseAlert = () => {
+  if (state.confirm.onConfirm) state.confirm.onConfirm()
   closeConfirm()
 }
 
@@ -142,6 +153,11 @@ const formattedText = computed(() => {
   display: flex;
   gap: 8px;
   width: 200px;
+}
+
+.right-group.single {
+  width: auto;
+  justify-content: flex-end;
 }
 
 .right-group :deep(.ms-button) {

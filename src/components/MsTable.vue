@@ -27,6 +27,11 @@
           </tr>
         </thead>
         <tbody>
+          <tr v-if="data.length === 0">
+            <td :colspan="columns.length + 2" class="no-data-cell">
+              <em>Không có dữ liệu</em>
+            </td>
+          </tr>
           <tr
             v-for="(row, index) in data"
             :key="row.id || index"
@@ -238,7 +243,7 @@ table {
 th {
   background-color: #f5f5f5;
   font-weight: 700;
-  padding: 10px 0px;
+  padding: 10px 10px 10px 10px;
   position: sticky;
   top: 0;
   z-index: 10;
@@ -263,7 +268,7 @@ th .col-resizer {
   z-index: 15;
 }
 td {
-  padding: 5px 0px;
+  padding: 5px 10px 5px 10px;
   border-bottom: 1px solid #e0e0e0;
   box-sizing: border-box;
 }
@@ -409,5 +414,13 @@ tfoot td {
 
 tfoot td:first-child {
   text-align: left;
+}
+
+.no-data-cell {
+  text-align: center;
+  padding: 40px 16px !important;
+  color: #666;
+  font-size: 14px;
+  border-bottom: none !important;
 }
 </style>

@@ -149,7 +149,7 @@
               <td
                 style="
                   text-align: right;
-                  padding: 10px 0px;
+                  padding: 10px 10px;
                   border-bottom: 1px solid #e0e0e0;
                   font-weight: 700;
                 "
@@ -159,7 +159,7 @@
               <td
                 style="
                   text-align: right;
-                  padding: 10px 0px;
+                  padding: 10px 10px;
                   border-bottom: 1px solid #e0e0e0;
                   font-weight: 700;
                 "
@@ -169,7 +169,7 @@
               <td
                 style="
                   text-align: right;
-                  padding: 10px 0px;
+                  padding: 10px 10px;
                   border-bottom: 1px solid #e0e0e0;
                   font-weight: 700;
                 "
@@ -187,15 +187,15 @@
                 {{ formatMoney(totals.remainingValue) }}
               </td>
               <td
-                style="text-align: right; padding: 10px 0px; border-bottom: 1px solid #e0e0e0"
+                style="text-align: right; padding: 10px 10px; border-bottom: 1px solid #e0e0e0"
               ></td>
               <td
-                style="text-align: right; padding: 10px 0px; border-bottom: 1px solid #e0e0e0"
+                style="text-align: right; padding: 10px 10px; border-bottom: 1px solid #e0e0e0"
               ></td>
               <td
                 style="
                   text-align: right;
-                  padding: 10px 0px;
+                  padding: 10px 10px;
                   border-bottom: 1px solid #e0e0e0;
                   font-weight: 700;
                 "
@@ -203,7 +203,7 @@
                 {{ formatMoney(totals.depreciationValueYear) }}
               </td>
 
-              <td style="padding: 10px 0px; border-bottom: 1px solid #e0e0e0"></td>
+              <td style="padding: 10px 10px; border-bottom: 1px solid #e0e0e0"></td>
             </tr>
           </tfoot>
         </table>
@@ -335,11 +335,11 @@ const departments = ref([])
 
 // --- Table Configuration ---
 const tableColumns = ref([
-  { key: 'stt', title: 'STT', width: '50px', align: 'center' },
-  { key: 'assetCode', title: 'Mã tài sản', width: '120px' },
+  { key: 'stt', title: 'STT', width: '55px', align: 'center'},
+  { key: 'assetCode', title: 'Mã tài sản', width: '180px' },
   { key: 'assetName', title: 'Tên tài sản', width: '200px' },
-  { key: 'assetTypeName', title: 'Loại tài sản', width: '200px' },
-  { key: 'departmentName', title: 'Bộ phận sử dụng', width: '200px' },
+  { key: 'assetTypeName', title: 'Loại tài sản', width: '250px' },
+  { key: 'departmentName', title: 'Bộ phận sử dụng', width: '250px' },
   { key: 'quantity', title: 'Số lượng', width: '100px', align: 'right', type: 'number' },
   { key: 'cost', title: 'Nguyên giá', width: '180px', align: 'right' },
   { key: 'accumulatedDepreciation', title: 'HM/KH lũy kế', width: '180px', align: 'right' },
