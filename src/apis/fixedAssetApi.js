@@ -64,16 +64,16 @@ const fixedAssetApi = {
   },
 
   // Lấy danh sách loại tài sản
-  getCategories() {
-    const url = '/FixedAssetCategories'
-    return axiosClient.get(url)
-  },
+  // getCategories() {
+  //   const url = '/FixedAssetCategories'
+  //   return axiosClient.get(url)
+  // },
 
-  // Lấy danh sách bộ phận
-  getDepartments() {
-    const url = '/Departments'
-    return axiosClient.get(url)
-  },
+  // // Lấy danh sách bộ phận
+  // getDepartments() {
+  //   const url = '/Departments'
+  //   return axiosClient.get(url)
+  // },
 }
 
 export default fixedAssetApi

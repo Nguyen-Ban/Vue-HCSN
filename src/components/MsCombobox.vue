@@ -23,7 +23,12 @@
       </div>
 
       <!-- Custom Dropdown -->
-      <div v-if="isOpen" class="ms-dropdown" @click.stop>
+      <div
+        v-if="isOpen"
+        class="ms-dropdown"
+        :style="dropdownStyle"
+        @click.stop
+      >
         <div class="ms-dropdown-header">
           <div class="ms-dropdown-col">Mã</div>
           <div class="ms-dropdown-col">Tên</div>
@@ -75,7 +80,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'dropdown-opened'])
 
 const isOpen = ref(false)
 const searchText = ref('')
@@ -134,10 +139,14 @@ const onSearch = (e) => {
  * Toggle dropdown
  */
 const toggleDropdown = () => {
-  isOpen.value = !isOpen.value
-  if (isOpen.value) {
+  if (!isOpen.value) {
+    // Phát event khi mở dropdown để các combobox khác đóng lại
+    emit('dropdown-opened')
+    isOpen.value = true
     searchText.value = ''
     highlightedIndex.value = filteredOptions.value.length ? 0 : -1
+  } else {
+    isOpen.value = false
   }
   if (!searchText.value.trim()) {
     emit('update:modelValue', null)
@@ -349,7 +358,28 @@ onUnmounted(() => document.removeEventListener('click', closeDropdown))
 }
 .ms-dropdown-body {
   overflow-y: auto;
-  max-height: 260px;
+  max-height: 280px;
+  scrollbar-width: thin;
+  scrollbar-color: #c0c0c0 #f5f5f5;
+}
+
+/* Scrollbar styling cho Chrome, Edge, Safari */
+.ms-dropdown-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.ms-dropdown-body::-webkit-scrollbar-track {
+  background: #f5f5f5;
+  border-radius: 4px;
+}
+
+.ms-dropdown-body::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+  border-radius: 4px;
+}
+
+.ms-dropdown-body::-webkit-scrollbar-thumb:hover {
+  background: #a0a0a0;
 }
 .ms-dropdown-item {
   display: flex;

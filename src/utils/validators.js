@@ -57,6 +57,13 @@ export const validateAssetForm = (form) => {
 
   if (form.cost < 0) {
     errors.cost = 'Nguyên giá không được âm'
+    setFirstMissing('Nguyên giá')
+    isValid = false
+  }
+
+  if (form.cost === 0 || form.cost === null || form.cost === undefined || form.cost === '') {
+    errors.cost = 'Nguyên giá phải lớn hơn 0'
+    setFirstMissing('Nguyên giá')
     isValid = false
   }
 
@@ -79,6 +86,12 @@ export const validateAssetForm = (form) => {
 
   if (!form.lifeTime || form.lifeTime <= 0) {
     errors.lifeTime = 'Số năm sử dụng phải lớn hơn 0'
+    setFirstMissing('Số năm sử dụng')
+    isValid = false
+  }
+
+  if (form.lifeTime < 0) {
+    errors.lifeTime = 'Số năm sử dụng không được âm'
     setFirstMissing('Số năm sử dụng')
     isValid = false
   }

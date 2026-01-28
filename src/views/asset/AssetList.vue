@@ -250,6 +250,8 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import fixedAssetApi from '../../apis/fixedAssetApi'
+import fixedAssetCategoryApi from '../../apis/fixedAssetCategoryApi'
+import departmentApi from '../../apis/departmentApi'
 import MsButton from '../../components/MsButton.vue'
 import MsInput from '../../components/MsInput.vue'
 import MsCombobox from '../../components/MsCombobox.vue'
@@ -447,7 +449,7 @@ const loadData = async () => {
 
 const loadDepartments = async () => {
   try {
-    const response = await fixedAssetApi.getDepartments()
+    const response = await departmentApi.getDepartments()
     console.log('Dữ liệu bộ phận từ backend:', response)
     // Hỗ trợ cả snake_case và camelCase từ backend
     departments.value = response.map((item) => ({
@@ -462,7 +464,7 @@ const loadDepartments = async () => {
 
 const loadAssetCategories = async () => {
   try {
-    const response = await fixedAssetApi.getCategories()
+    const response = await fixedAssetCategoryApi.getCategories()
     console.log('Dữ liệu loại tài sản từ backend:', response)
     // Hỗ trợ cả snake_case và camelCase từ backend
     assetTypes.value = response.map((item) => ({

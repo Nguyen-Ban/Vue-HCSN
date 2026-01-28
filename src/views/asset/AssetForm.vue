@@ -27,6 +27,7 @@
           itemText="name"
           displayMode="code"
           placeholder="Chọn mã bộ phận sử dụng"
+          @dropdown-opened="handleDepartmentDropdownOpen"
         />
         <span class="error-message">{{ errors.departmentId }}</span>
       </div>
@@ -45,6 +46,7 @@
           itemText="name"
           displayMode="code"
           placeholder="Chọn mã loại tài sản"
+          @dropdown-opened="handleAssetTypeDropdownOpen"
         />
         <span class="error-message">{{ errors.assetTypeId }}</span>
       </div>
@@ -180,6 +182,8 @@ const depreciationRateTouched = ref(false)
 const skipAssetTypeAutofill = ref(false)
 // Đánh dấu đang nhân bản để không auto-fill startUsingDate
 const isDuplicateMode = ref(false)
+// Bỏ qua auto-calculate khi đang load dữ liệu từ backend
+const skipAutocalculate = ref(false)
 
 const isOpen = computed({
   get: () => props.modelValue,
@@ -234,7 +238,7 @@ const {
 // Lưu dữ liệu gốc để so sánh sau này khi sửa
 const originalFormData = ref(null)
 
-// Watch departmentId để tự động điền departmentName
+// Watch departmentId để tự động điền departmentName và clear error
 watch(
   () => form.value.departmentId,
   (newId) => {
@@ -242,6 +246,7 @@ watch(
       const dept = props.departments?.find((d) => d.id === newId)
       if (dept) {
         form.value.departmentName = dept.name
+        errors.value.departmentId = ''
       }
     } else {
       form.value.departmentName = ''
@@ -249,7 +254,7 @@ watch(
   },
 )
 
-// Watch assetTypeId để tự động điền assetTypeName
+// Watch assetTypeId để tự động điền assetTypeName và clear error
 watch(
   () => form.value.assetTypeId,
   (newId) => {
@@ -258,6 +263,7 @@ watch(
       const type = props.assetTypes?.find((t) => t.id === newId)
       if (type) {
         form.value.assetTypeName = type.name
+        errors.value.assetTypeId = ''
         // Đổi loại tài sản: reset trạng thái chỉnh tay và áp giá trị mặc định của loại
         lifeTimeTouched.value = false
         depreciationRateTouched.value = false
@@ -270,6 +276,110 @@ watch(
       }
     } else {
       form.value.assetTypeName = ''
+    }
+  },
+)
+
+// Watch assetCode để clear error
+watch(
+  () => form.value.assetCode,
+  (code) => {
+    if (code?.trim()) {
+      errors.value.assetCode = ''
+    }
+  },
+)
+
+// Watch assetName để clear error
+watch(
+  () => form.value.assetName,
+  (name) => {
+    if (name?.trim()) {
+      errors.value.assetName = ''
+    }
+  },
+)
+
+// Watch quantity để clear error
+watch(
+  () => form.value.quantity,
+  (qty) => {
+    if (qty && qty > 0) {
+      errors.value.quantity = ''
+    }
+  },
+)
+
+// Watch purchaseDate để clear error
+watch(
+  () => form.value.purchaseDate,
+  (date) => {
+    if (date) {
+      errors.value.purchaseDate = ''
+    }
+  },
+  { immediate: false },
+)
+
+// Watch startUsingDate để clear error
+watch(
+  () => form.value.startUsingDate,
+  (date) => {
+    if (date) {
+      errors.value.startUsingDate = ''
+    }
+  },
+  { immediate: false },
+)
+
+// Watch depreciationRate để clear error
+watch(
+  () => form.value.depreciationRate,
+  (rate) => {
+    const rateNum = Number(rate) || 0
+    if (rateNum >= 0 && rateNum <= 100) {
+      errors.value.depreciationRate = ''
+    }
+  },
+)
+
+// Watch depreciationValueYear để clear error
+watch(
+  () => form.value.depreciationValueYear,
+  (value) => {
+    const valueNum = Number(value) || 0
+    if (valueNum >= 0) {
+      errors.value.depreciationValueYear = ''
+    }
+  },
+)
+
+// Watch cost để validate nguyên giá
+watch(
+  () => form.value.cost,
+  (cost) => {
+    const costNum = Number(cost) || 0
+    if (costNum < 0) {
+      errors.value.cost = 'Nguyên giá không được âm'
+    } else if (costNum === 0) {
+      errors.value.cost = 'Nguyên giá phải lớn hơn 0'
+    } else {
+      errors.value.cost = ''
+    }
+  },
+)
+
+// Watch lifeTime để validate số năm sử dụng
+watch(
+  () => form.value.lifeTime,
+  (lifeTime) => {
+    const lifeTimeNum = Number(lifeTime) || 0
+    if (lifeTimeNum < 0) {
+      errors.value.lifeTime = 'Số năm sử dụng không được âm'
+    } else if (lifeTimeNum === 0) {
+      errors.value.lifeTime = 'Số năm sử dụng phải lớn hơn 0'
+    } else {
+      errors.value.lifeTime = ''
     }
   },
 )
@@ -296,10 +406,15 @@ watch(
 
 // Tự động tính tỷ lệ hao mòn = 100 / Số năm sử dụng
 // và hao mòn năm = Nguyên giá / Số năm sử dụng
+// Chỉ tính khi người dùng thay đổi lifeTime, KHÔNG tính khi load từ backend
 watch(
   () => form.value.lifeTime,
   (lifeTime) => {
-    if (lifeTime && lifeTime > 0 && !depreciationRateTouched.value) {
+    // Bỏ qua auto-calculate khi đang load dữ liệu từ backend
+    if (skipAutocalculate.value) return
+
+    // Chỉ auto-calculate nếu người dùng đã chỉnh tay lifeTime
+    if (lifeTime && lifeTime > 0 && lifeTimeTouched.value && !depreciationRateTouched.value) {
       // Tỷ lệ hao mòn = 100 / Số năm sử dụng
       form.value.depreciationRate = 100 / lifeTime
 
@@ -373,6 +488,11 @@ watch(
     if (newData && (props.mode === 'edit' || newData.duplicateMode)) {
       isDuplicateMode.value = newData.duplicateMode ? true : false
       skipAssetTypeAutofill.value = true
+      skipAutocalculate.value = true
+      // Reset touched flags khi load từ backend
+      lifeTimeTouched.value = false
+      depreciationRateTouched.value = false
+
       form.value = mapBackendDataToForm(newData, props.departments, props.assetTypes, normalizeDate)
 
       if (newData.duplicateMode) {
@@ -382,6 +502,7 @@ watch(
 
       nextTick(() => {
         skipAssetTypeAutofill.value = false
+        skipAutocalculate.value = false
       })
       // Lưu bản sao dữ liệu gốc
       originalFormData.value = JSON.parse(JSON.stringify(form.value))
@@ -465,6 +586,45 @@ const validateForm = () => {
   const { errors: newErrors, isValid, firstMissingField } = validateAssetForm(form.value)
   errors.value = newErrors
   return { isValid, firstMissingField }
+}
+
+/**
+ * Xử lý khi bộ phận combobox mở - đóng combobox loại tài sản
+ * @returns {void}
+ * Created by NVBan - 28/01/2026
+ */
+const handleDepartmentDropdownOpen = () => {
+  // Force trigger để đóng assetType combobox nếu nó đang mở
+  // Sử dụng setTimeout để đảm bảo DOM được cập nhật
+  setTimeout(() => {
+    const assetTypeCombobox = document.querySelector('.form-group:has([placeholder="Chọn mã loại tài sản"]) .ms-combo-wrapper')
+    if (assetTypeCombobox) {
+      const clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true })
+      const input = assetTypeCombobox.querySelector('.ms-select')
+      if (input && input.closest('.ms-combo-wrapper').querySelector('.ms-dropdown')) {
+        input.click()
+      }
+    }
+  }, 0)
+}
+
+/**
+ * Xử lý khi loại tài sản combobox mở - đóng combobox bộ phận
+ * @returns {void}
+ * Created by NVBan - 28/01/2026
+ */
+const handleAssetTypeDropdownOpen = () => {
+  // Force trigger để đóng department combobox nếu nó đang mở
+  setTimeout(() => {
+    const departmentCombobox = document.querySelector('.form-group:has([placeholder="Chọn mã bộ phận sử dụng"]) .ms-combo-wrapper')
+    if (departmentCombobox) {
+      const clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true })
+      const input = departmentCombobox.querySelector('.ms-select')
+      if (input && input.closest('.ms-combo-wrapper').querySelector('.ms-dropdown')) {
+        input.click()
+      }
+    }
+  }, 0)
 }
 
 /**
