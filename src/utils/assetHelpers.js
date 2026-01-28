@@ -4,6 +4,7 @@
  * @param {string} codeValue - Giá trị code
  * @param {string} nameValue - Giá trị name
  * @returns {string} - ID tìm được hoặc chuỗi rỗng
+ * Created by NVBan - 28/01/2026
  */
 export const findIdByCodeOrName = (list, codeValue, nameValue) => {
   if (!list || list.length === 0) return ''
@@ -20,6 +21,7 @@ export const findIdByCodeOrName = (list, codeValue, nameValue) => {
  * @param {Array} assetTypes - Danh sách loại tài sản
  * @param {Function} normalizeDate - Hàm normalize date
  * @returns {Object} - Form data đã map
+ * Created by NVBan - 28/01/2026
  */
 export const mapBackendDataToForm = (data, departments, assetTypes, normalizeDate) => {
   const departmentCode = data.department_code || data.departmentCode
@@ -43,8 +45,8 @@ export const mapBackendDataToForm = (data, departments, assetTypes, normalizeDat
   const assetTypeId = assetTypeIdRaw || ''
 
   const purchaseDateFormatted = normalizeDate(data.purchase_date || '')
-  const usedStartDateFormatted = normalizeDate(data.used_start_date || '')
-  const usedStartDateFinal = usedStartDateFormatted || purchaseDateFormatted || ''
+  const startUsingDateFormatted = normalizeDate(data.start_using_date || '')
+  const startUsingDateFinal = startUsingDateFormatted || purchaseDateFormatted || ''
 
   return {
     id: data.id || data.fixed_asset_id,
@@ -59,7 +61,7 @@ export const mapBackendDataToForm = (data, departments, assetTypes, normalizeDat
     cost: data.cost || 0,
     depreciationRate: data.depreciation_rate || 0,
     purchaseDate: purchaseDateFormatted,
-    usedStartDate: usedStartDateFinal,
+    startUsingDate: startUsingDateFinal,
     trackedYear: data.tracked_year || new Date().getFullYear(),
     lifeTime: data.life_time || 0,
     depreciationValueYear: data.depreciation_value_year || 0,
@@ -70,6 +72,7 @@ export const mapBackendDataToForm = (data, departments, assetTypes, normalizeDat
  * Map dữ liệu từ form để gửi lên backend
  * @param {Object} form - Form data
  * @returns {Object} - Data để gửi lên backend
+ * Created by NVBan - 28/01/2026
  */
 export const mapFormToBackendData = (form) => {
   return {
@@ -83,7 +86,7 @@ export const mapFormToBackendData = (form) => {
     cost: form.cost,
     depreciation_rate: form.depreciationRate,
     purchase_date: form.purchaseDate,
-    used_start_date: form.usedStartDate,
+    start_using_date: form.startUsingDate,
     tracked_year: form.trackedYear,
     life_time: form.lifeTime,
     depreciation_value_year: form.depreciationValueYear,

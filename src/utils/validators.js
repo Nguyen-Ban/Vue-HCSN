@@ -1,7 +1,8 @@
 /**
  * Validate form tài sản
  * @param {Object} form - Form data
- * @returns {Object} - Object chứa errors và isValid
+ * @returns {Object} - Object chứa errors, isValid và firstMissingField
+ * Created by NVBan - 28/01/2026
  */
 export const validateAssetForm = (form) => {
   let isValid = true
@@ -15,7 +16,7 @@ export const validateAssetForm = (form) => {
     cost: '',
     depreciationRate: '',
     purchaseDate: '',
-    usedStartDate: '',
+    startUsingDate: '',
     lifeTime: '',
     depreciationValueYear: '',
   }
@@ -70,8 +71,8 @@ export const validateAssetForm = (form) => {
     isValid = false
   }
 
-  if (!form.usedStartDate) {
-    errors.usedStartDate = 'Ngày bắt đầu sử dụng không được để trống'
+  if (!form.startUsingDate) {
+    errors.startUsingDate = 'Ngày bắt đầu sử dụng không được để trống'
     setFirstMissing('Ngày bắt đầu sử dụng')
     isValid = false
   }
@@ -93,6 +94,8 @@ export const validateAssetForm = (form) => {
 /**
  * Event handler để chỉ cho phép nhập số
  * @param {Event} event - Keyboard event
+ * @returns {void}
+ * Created by NVBan - 28/01/2026
  */
 export const allowOnlyNumbers = (event) => {
   const charCode = event.which ? event.which : event.keyCode

@@ -14,6 +14,7 @@
         :placeholder="placeholder || 'Chọn giá trị'"
         @input="onSearch"
         @click="toggleDropdown"
+        @keydown="onKeydown"
         @keydown.escape="isOpen = false"
       />
 
@@ -29,10 +30,13 @@
         </div>
         <div v-if="filteredOptions.length > 0" class="ms-dropdown-body">
           <div
-            v-for="item in filteredOptions"
+            v-for="(item, idx) in filteredOptions"
             :key="item[itemValue]"
             class="ms-dropdown-item"
-            :class="{ selected: modelValue == item[itemValue] }"
+            :class="{
+              selected: modelValue == item[itemValue],
+              highlighted: highlightedIndex === idx,
+            }"
             @click="selectItem(item)"
           >
             <div class="ms-dropdown-col">{{ item[itemCode] }}</div>
@@ -75,6 +79,7 @@ const emit = defineEmits(['update:modelValue'])
 
 const isOpen = ref(false)
 const searchText = ref('')
+const highlightedIndex = ref(-1) // index mục được highlight khi dùng phím
 
 const selectedItem = computed(() =>
   props.options?.find((item) => {
@@ -84,7 +89,7 @@ const selectedItem = computed(() =>
 )
 
 /**
- * 🔍 LỌC – chỉ theo tên nếu filterBy = text
+ * LỌC – chỉ theo tên nếu filterBy = text
  */
 const filteredOptions = computed(() => {
   if (!searchText.value.trim()) return props.options || []
@@ -108,7 +113,7 @@ const filteredOptions = computed(() => {
 })
 
 /**
- * ✍️ Gõ tìm kiếm
+ * Gõ tìm kiếm
  */
 const onSearch = (e) => {
   searchText.value = e.target.value
@@ -121,15 +126,18 @@ const onSearch = (e) => {
   if (!isOpen.value) {
     isOpen.value = true
   }
+
+  highlightedIndex.value = filteredOptions.value.length ? 0 : -1
 }
 
 /**
- * 🔄 Toggle dropdown
+ * Toggle dropdown
  */
 const toggleDropdown = () => {
   isOpen.value = !isOpen.value
   if (isOpen.value) {
     searchText.value = ''
+    highlightedIndex.value = filteredOptions.value.length ? 0 : -1
   }
   if (!searchText.value.trim()) {
     emit('update:modelValue', null)
@@ -146,14 +154,16 @@ const selectItem = (item) => {
   searchText.value = props.displayMode === 'code' ? item[props.itemCode] : item[props.itemText]
 
   isOpen.value = false
+  highlightedIndex.value = -1
 }
 
 /**
- * 🔁 Khi modelValue đổi từ bên ngoài
+ * Khi modelValue đổi từ bên ngoài
  */
 watch(selectedItem, (item) => {
   if (!item) {
     searchText.value = ''
+    highlightedIndex.value = -1
     return
   }
 
@@ -161,7 +171,7 @@ watch(selectedItem, (item) => {
 })
 
 /**
- * 🔁 Khi modelValue hoặc options thay đổi - sync searchText
+ * Khi modelValue hoặc options thay đổi - sync searchText
  */
 watch(
   [() => props.modelValue, () => props.options],
@@ -169,20 +179,78 @@ watch(
     const item = props.options?.find((opt) => opt[props.itemValue] == props.modelValue)
     if (item) {
       searchText.value = props.displayMode === 'code' ? item[props.itemCode] : item[props.itemText]
+      highlightedIndex.value = filteredOptions.value.findIndex(
+        (opt) => opt[props.itemValue] == item[props.itemValue],
+      )
     } else {
       searchText.value = ''
+      highlightedIndex.value = -1
     }
   },
   { immediate: true },
 )
 
 /**
- * ❌ Click ngoài
+ * Click ngoài
  */
 const closeDropdown = (e) => {
   if (!e.target.closest('.ms-combo-wrapper')) {
     isOpen.value = false
+    highlightedIndex.value = -1
   }
+}
+
+/**
+ * Điều hướng bàn phím trong dropdown
+ */
+const onKeydown = (e) => {
+  if (!isOpen.value && ['ArrowDown', 'ArrowUp', 'Enter'].includes(e.key)) {
+    isOpen.value = true
+    highlightedIndex.value = filteredOptions.value.length ? 0 : -1
+    return
+  }
+
+  if (!isOpen.value) return
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    const next = highlightedIndex.value + 1
+    if (next < filteredOptions.value.length) {
+      highlightedIndex.value = next
+      scrollHighlightedIntoView()
+    }
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    const prev = highlightedIndex.value - 1
+    if (prev >= 0) {
+      highlightedIndex.value = prev
+      scrollHighlightedIntoView()
+    }
+  } else if (e.key === 'Enter') {
+    e.preventDefault()
+    if (highlightedIndex.value >= 0 && highlightedIndex.value < filteredOptions.value.length) {
+      selectItem(filteredOptions.value[highlightedIndex.value])
+    }
+  }
+}
+
+const scrollHighlightedIntoView = () => {
+  requestAnimationFrame(() => {
+    const dropdown = document.querySelector('.ms-dropdown-body')
+    if (!dropdown) return
+    const items = dropdown.querySelectorAll('.ms-dropdown-item')
+    const el = items[highlightedIndex.value]
+    if (!el) return
+    const { offsetTop, offsetHeight } = el
+    const { scrollTop, clientHeight } = dropdown
+    const visibleTop = scrollTop
+    const visibleBottom = scrollTop + clientHeight
+    if (offsetTop < visibleTop) {
+      dropdown.scrollTop = offsetTop
+    } else if (offsetTop + offsetHeight > visibleBottom) {
+      dropdown.scrollTop = offsetTop + offsetHeight - clientHeight
+    }
+  })
 }
 
 onMounted(() => document.addEventListener('click', closeDropdown))
@@ -293,6 +361,10 @@ onUnmounted(() => document.removeEventListener('click', closeDropdown))
   border-radius: 3px;
   align-items: center;
   gap: 12px;
+}
+.ms-dropdown-item.highlighted {
+  background: #f0f7ff;
+  border: 1px solid #b3d7ff;
 }
 .ms-dropdown-item:hover {
   background: #e6f2ff;

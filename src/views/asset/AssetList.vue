@@ -321,7 +321,7 @@ const formData = ref({
   cost: 0,
   depreciationRate: 0,
   purchaseDate: '',
-  usedStartDate: '',
+  startUsingDate: '',
   trackedYear: new Date().getFullYear(),
   productionYear: 0,
   lifeTime: 0,
@@ -398,7 +398,7 @@ const mapAssetData = (items, pageNumber, pageSizeValue) => {
     cost: item.cost || 0,
     depreciationRate: item.depreciation_rate || 0,
     purchaseDate: item.purchase_date || '',
-    usedStartDate: item.used_start_date || '',
+    startUsingDate: item.start_using_date || '',
     trackedYear: item.tracked_year || new Date().getFullYear(),
     lifeTime: item.life_time || 0,
     depreciationValueYear: item.depreciation_value_year || 0,
@@ -552,7 +552,7 @@ const openAddModal = async () => {
       cost: 0,
       depreciationRate: 0,
       purchaseDate: '',
-      usedStartDate: '',
+      startUsingDate: '',
       trackedYear: new Date().getFullYear(),
       productionYear: 0,
       lifeTime: 0,
@@ -804,6 +804,10 @@ const confirmDeleteSelected = () => {
 }
 
 :deep(tr:hover) .action-btn {
+  opacity: 1;
+}
+
+:deep(.row-focused) .action-btn {
   opacity: 1;
 }
 

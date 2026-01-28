@@ -1,6 +1,12 @@
 <template>
   <div class="ms-grid-container">
-    <div class="ms-table-scroll" ref="bodyScroll" @scroll="syncFooterScroll">
+    <div
+      class="ms-table-scroll"
+      ref="bodyScroll"
+      tabindex="0"
+      @scroll="syncFooterScroll"
+      @keydown="onKeydown"
+    >
       <table>
         <colgroup>
           <col style="width: 40px" />
@@ -35,6 +41,12 @@
           <tr
             v-for="(row, index) in data"
             :key="row.id || index"
+            :data-row-index="index"
+            :class="{
+              'row-focused': focusedRowIndex === index,
+              'row-selected': selectedRows.includes(row.id)
+            }"
+            tabindex="-1"
             @contextmenu.prevent="onRowContextMenu($event, row)"
           >
             <td class="ms-td-checkbox">
@@ -91,6 +103,7 @@ const selectedRows = ref([]) // Chứa ID các dòng được chọn
 const bodyScroll = ref(null)
 const footerScroll = ref(null)
 const widths = ref({})
+const focusedRowIndex = ref(-1)
 
 // Logic chọn tất cả
 const isAllSelected = computed(() => {
@@ -168,6 +181,9 @@ const syncFooterScroll = () => {
 
 onMounted(() => {
   nextTick(syncFooterScroll)
+  if (props.data?.length) {
+    focusedRowIndex.value = 0
+  }
 })
 
 // Phát sự kiện contextmenu khi người dùng chuột phải vào một dòng
@@ -216,6 +232,55 @@ watch(
   },
   { immediate: true, deep: true },
 )
+
+watch(
+  () => props.data,
+  (rows) => {
+    if (!rows || !rows.length) {
+      focusedRowIndex.value = -1
+    } else if (focusedRowIndex.value < 0 || focusedRowIndex.value >= rows.length) {
+      focusedRowIndex.value = 0
+    }
+  },
+  { immediate: true, deep: true },
+)
+
+// Điều hướng bàn phím trong bảng
+const onKeydown = (e) => {
+  if (!props.data?.length) return
+  if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    focusRow(Math.min(focusedRowIndex.value + 1, props.data.length - 1))
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    focusRow(Math.max(focusedRowIndex.value - 1, 0))
+  }
+}
+
+const focusRow = (index) => {
+  focusedRowIndex.value = index
+  nextTick(() => {
+    if (!bodyScroll.value) return
+    const rowEl = bodyScroll.value.querySelector(`tr[data-row-index="${index}"]`)
+    if (rowEl) {
+      rowEl.focus({ preventScroll: true })
+      ensureRowVisible(rowEl)
+    }
+  })
+}
+
+const ensureRowVisible = (rowEl) => {
+  if (!bodyScroll.value) return
+  const { offsetTop, offsetHeight } = rowEl
+  const { scrollTop, clientHeight } = bodyScroll.value
+  const visibleTop = scrollTop
+  const visibleBottom = scrollTop + clientHeight
+  if (offsetTop < visibleTop) {
+    bodyScroll.value.scrollTop = offsetTop
+  } else if (offsetTop + offsetHeight > visibleBottom) {
+    bodyScroll.value.scrollTop = offsetTop + offsetHeight - clientHeight
+  }
+}
 </script>
 
 <style scoped>
@@ -293,6 +358,16 @@ td {
 tr:hover {
   background-color: #f2f9ff; /* Hover màu xanh nhạt theo style MISA */
 }
+
+/* Highlight background khi row được chọn */
+.row-selected {
+  background-color: #e3f2fd !important;
+}
+
+.row-selected:hover {
+  background-color: #bbdefb !important;
+}
+
 .ms-th-checkbox,
 .ms-td-checkbox {
   width: 40px;
@@ -366,14 +441,40 @@ th.sticky-col-right {
   right: 0;
   z-index: 12; /* cao hơn các th khác */
   background-color: #f5f5f5;
-  box-shadow: -4px 0 6px rgba(0, 0, 0, 0.06); /* viền mờ bên trái */
 }
 td.sticky-col-right {
   position: sticky;
   right: 0;
   z-index: 3; /* cao hơn các ô thường */
   background-color: #fff;
-  box-shadow: -4px 0 6px rgba(0, 0, 0, 0.04);
+}
+
+tr:focus {
+  outline: none;
+}
+
+/* Dòng được focus tô nền thay cho outline để nổi bật khi điều hướng bằng phím */
+.row-focused {
+  background-color: #f2f9ff;
+  box-shadow: inset 0 0 0 0px #b5d9ff;
+}
+
+:deep(tr:hover) .ms-td-action.sticky-col-right {
+  background-color: #f2f9ff;
+}
+:deep(.row-focused) .ms-td-action.sticky-col-right {
+  background-color: #f2f9ff;
+}
+
+/* Cột chức năng khi row được chọn */
+:deep(.row-selected) .ms-td-action.sticky-col-right,
+:deep(.row-selected) td.sticky-col-right {
+  background-color: #e3f2fd !important;
+}
+
+:deep(.row-selected:hover) .ms-td-action.sticky-col-right,
+:deep(.row-selected:hover) td.sticky-col-right {
+  background-color: #bbdefb !important;
 }
 
 .ms-table-footer {

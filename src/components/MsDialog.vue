@@ -65,7 +65,7 @@ const handleClose = () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 24px 24px 0px 24px;
+  padding: 16px 16px 0px 16px;
 }
 
 .ms-popup-title {
@@ -89,7 +89,7 @@ const handleClose = () => {
 } */
 
 .ms-popup-body {
-  padding: 24px;
+  padding: 16px;
   overflow-y: auto;
   flex: 1;
   /* Luôn dành chỗ cho scrollbar để tránh layout shift */
@@ -99,7 +99,7 @@ const handleClose = () => {
 .ms-popup-footer {
   height: 52px;
   background-color: #f5f5f5;
-  padding: 0 24px;
+  padding: 0 16px;
   display: flex;
   align-items: center;
   justify-content: flex-end; /* Nút nằm bên phải */
